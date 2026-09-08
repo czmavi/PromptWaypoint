@@ -1,0 +1,17 @@
+{
+  "identifier": "push",
+  "description": "Mobile remote notification permission and registration",
+  "windows": [
+    "main"
+  ],
+  "platforms": [
+    "iOS",
+    "android"
+  ],
+  "permissions": [
+    "companion-native:allow-request-push",
+    "companion-native:allow-take-notifications",
+    "companion-native:allow-register-listener",
+    "companion-native:allow-remove-listener"
+  ]
+}

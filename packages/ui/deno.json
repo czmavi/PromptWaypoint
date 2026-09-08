@@ -1,0 +1,14 @@
+{
+  "name": "@pmai/ui",
+  "version": "0.1.0",
+  "exports": "./main.ts",
+  "imports": {
+    "preact": "npm:preact@10.29.7",
+    "preact/hooks": "npm:preact@10.29.7/hooks",
+    "preact/jsx-runtime": "npm:preact@10.29.7/jsx-runtime"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "identifier": "default",
+  "description": "Companion mobile authentication and navigation",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "companion-native:default",
+    "deep-link:default"
+  ]
+}

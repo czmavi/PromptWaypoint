@@ -1,0 +1,24 @@
+{
+  "workspace": [
+    "./apps/agent",
+    "./packages/core",
+    "./packages/protocol",
+    "./packages/provider-types",
+    "./packages/api-client",
+    "./apps/server",
+    "./apps/desktop",
+    "./packages/ui",
+    "./apps/mobile"
+  ],
+  "exclude": [],
+  "tasks": {
+    "agent": "deno task --cwd apps/agent start",
+    "check": "deno check",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-net --allow-run",
+    "server": "deno task --cwd apps/server serve",
+    "test:integration": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run apps/server/tests/with_postgres.ts",
+    "desktop": "deno task --cwd apps/desktop dev",
+    "mobile": "deno task --cwd apps/mobile dev"
+  },
+  "nodeModulesDir": "auto"
+}

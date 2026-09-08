@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-write-auth"
+description = "Enables the write_auth command without any pre-configured scope."
+commands.allow = ["write_auth"]
+
+[[permission]]
+identifier = "deny-write-auth"
+description = "Denies the write_auth command without any pre-configured scope."
+commands.deny = ["write_auth"]

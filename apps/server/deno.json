@@ -1,0 +1,28 @@
+{
+  "tasks": {
+    "check": "deno fmt --check . && deno lint . && deno check",
+    "dev": "deno run --watch --allow-env --allow-net --allow-read main.ts",
+    "start": "deno run --allow-env --allow-net --allow-read main.ts",
+    "serve": "deno run --allow-env --allow-net --allow-read main.ts",
+    "migrate": "deno run --allow-env --allow-net --allow-read src/db/migrate.ts",
+    "test": "deno test --allow-env --allow-net --allow-read tests"
+  },
+  "lint": {
+    "rules": {
+      "tags": [
+        "fresh",
+        "recommended"
+      ]
+    }
+  },
+  "exclude": [
+    "**/_fresh/*"
+  ],
+  "imports": {
+    "fresh": "jsr:@fresh/core@^2.3.3",
+    "postgres": "npm:postgres@3.4.7"
+  },
+  "compilerOptions": {
+    "strict": true
+  }
+}
