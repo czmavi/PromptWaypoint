@@ -36,7 +36,9 @@ is an authenticated, user-scoped JSON summary.
 | `PMAI_DEV_AUTH_SECRET` | Optional high-entropy bootstrap secret, at least 32 characters     |
 | `PMAI_CORS_ORIGINS`    | Additional comma-separated, exact client origins                   |
 | `PMAI_APNS_TOPIC`      | Optional APNS application bundle/topic                             |
-| `PMAI_APNS_TOKEN_FILE` | File containing a current APNS provider bearer JWT                 |
+| `PMAI_APNS_KEY_FILE`   | Server-only path to the Apple APNs PKCS8 `.p8` key                 |
+| `PMAI_APNS_KEY_ID`     | Apple APNs Key ID                                                  |
+| `PMAI_APNS_TEAM_ID`    | Apple Developer Team ID (JWT issuer)                               |
 | `PMAI_APNS_SANDBOX`    | Set `true` for Apple's sandbox endpoint                            |
 | `PMAI_FCM_PROJECT`     | Optional FCM project ID                                            |
 | `PMAI_FCM_TOKEN_FILE`  | File containing a current Google OAuth access token with FCM scope |
@@ -236,12 +238,33 @@ Delivery is at least once, so a crash after external delivery but before its DB
 receipt may duplicate a notification.
 
 Without configured push providers, registrations/jobs remain persistent and are
-not falsely marked delivered. Token files are read when sending, allowing
-deployment credentials to rotate. Provision/refresh the APNS JWT and scoped
-Google access token through your deployment's secret/credential service;
-automatic token minting is not part of this MVP. Alternatively inject refreshing
-token callbacks directly into the adapters. Real Apple/Google delivery requires
-app credentials and has not been performed during development tests.
+not falsely marked delivered. The APNs provider signs ES256 JWTs locally from
+the `.p8` key, using the Key ID in `kid` and Team ID in `iss`. One supplier per
+server caches its JWT for 50 minutes and coalesces concurrent signing requests.
+At renewal it rereads the key file; restart the process when changing Key ID or
+Team ID. Keep the server clock synchronized. Keys are imported as
+non-extractable and failures redact key contents and paths. The supplier's
+clock/key reader and the push provider's token callback are injectable for
+tests.
+
+Mount the key read-only from secret storage, readable only by the server service
+account (for a local file, use restrictive permissions such as `chmod 600`).
+Never put it in client configuration, static assets or source control. Configure
+all four APNs settings together; incomplete configuration and the obsolete
+`PMAI_APNS_TOKEN_FILE` fail startup. For TestFlight:
+
+```sh
+PMAI_APNS_TOPIC=com.caretsix.aiproductmanager
+PMAI_APNS_SANDBOX=false
+```
+
+Set `PMAI_APNS_KEY_FILE`, `PMAI_APNS_KEY_ID` and `PMAI_APNS_TEAM_ID` through the
+server deployment's secret/configuration system using the actual Apple values.
+Debug/device builds use `PMAI_APNS_SANDBOX=true`; keep development and
+production registrations in separate server environments. FCM still reads a
+current Google OAuth token from its token file; Google token minting is
+unchanged. Real APNs and FCM delivery requires account configuration and device
+testing and has not been verified by these automated tests.
 
 Interface references:
 [Fresh routing](https://usefresh.dev/docs/concepts/routing),

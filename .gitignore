@@ -1,1 +1,9 @@
 node_modules/
+
+# Apple signing and APNs secrets belong in external secret storage.
+*.p8
+*.p12
+*.pfx
+*.mobileprovision
+*.provisionprofile
+*.cer

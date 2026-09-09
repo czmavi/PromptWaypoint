@@ -1,8 +1,8 @@
 name: mobile
 options:
-  bundleIdPrefix: com.caretsix.aiproductmanager
+  bundleIdPrefix: {{app.identifier}}
   deploymentTarget:
-    iOS: 15.0
+    iOS: {{apple.ios-version}}
 fileGroups: [../../src]
 configs:
   debug: debug
@@ -10,9 +10,12 @@ configs:
 settingGroups:
   app:
     base:
-      PRODUCT_NAME: "PM.ai"
-      PRODUCT_BUNDLE_IDENTIFIER: com.caretsix.aiproductmanager
+      PRODUCT_NAME: "{{app.stylized-name}}"
+      PRODUCT_BUNDLE_IDENTIFIER: {{app.identifier}}
       CODE_SIGN_STYLE: Automatic
+      {{#if apple.development-team}}
+      DEVELOPMENT_TEAM: {{apple.development-team}}
+      {{/if}}
 targetTemplates:
   app:
     type: application
@@ -40,7 +43,7 @@ targets:
     info:
       path: mobile_iOS/Info.plist
       properties:
-        CFBundleDisplayName: "PM.ai"
+        CFBundleDisplayName: "{{app.stylized-name}}"
         ITSAppUsesNonExemptEncryption: false
         CFBundleURLTypes:
           - CFBundleURLSchemes: [pmai]
@@ -56,8 +59,10 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "{{apple.bundle-version-short}}"
+        CFBundleVersion: "{{apple.bundle-version}}"
+        {{~#each apple.plist-pairs}}
+        {{this.key}}: {{this.value}}{{/each}}
     entitlements:
       path: mobile_iOS/mobile_iOS.entitlements
       properties:

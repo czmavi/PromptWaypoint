@@ -2,7 +2,11 @@
   "tasks": {
     "dev": "vite --host 0.0.0.0",
     "build": "deno check src/main.tsx && vite build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "ios:check": "deno run --allow-read --allow-run=plutil scripts/ios-check.ts",
+    "ios:release": "deno task tauri ios build --archive-only --open",
+    "ios:export": "deno task tauri ios build --export-method app-store-connect",
+    "ios:icons:sync": "deno run --allow-read --allow-write=src-tauri/gen/apple/Assets.xcassets scripts/ios-icons-sync.ts"
   },
   "imports": {
     "preact": "npm:preact@10.29.7",

@@ -1,7 +1,9 @@
-# Uncomment the next line to define a global platform for your project
+# Keep CocoaPods aligned with the canonical Tauri iOS deployment target.
+require 'json'
+ios_config = JSON.parse(File.read(File.expand_path('../../tauri.ios.conf.json', __dir__)))
 
 target 'mobile_iOS' do
-platform :ios, '14.0'
+platform :ios, ios_config.fetch('bundle').fetch('iOS').fetch('minimumSystemVersion')
   # Pods for mobile_iOS
 end
 

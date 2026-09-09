@@ -82,20 +82,18 @@ deno task tauri ios dev
 deno task tauri ios build --debug --target aarch64-sim --no-sign --ci
 ```
 
-The iOS application ID is `com.caretsix.aiproductmanager` (set in
-`src-tauri/tauri.ios.conf.json`). Enable Push Notifications for this App ID in
-your Apple developer account and select your signing team. The checked in
-entitlement uses `aps-environment=development`; use the production entitlement
-and matching server APNs environment for TestFlight/App Store distribution. The
-APNs server topic must match the application ID. APNs credentials stay on the
-server. Real delivery requires a provisioned application; compilation alone does
-not prove push delivery.
+The iOS application is **PM.ai**, bundle ID `com.caretsix.aiproductmanager`,
+minimum iOS 15.0, marketing version 0.1.0 and build number 1. Canonical settings
+live in `src-tauri/tauri.ios.conf.json` and its `src-tauri/ios/project.yml.hbs`
+template. Regeneration preserves Debug APNs `development` and Release APNs
+`production`, automatic signing, the `pmai` scheme and the export-compliance
+declaration. Internal Rust/Xcode target names remain `mobile` / `mobile_iOS`.
 
-The generated Xcode project preserves its URL scheme and push entitlement in
-`gen/apple/project.yml`. When regenerating native projects, review these
-settings. The plugin installs APNs callbacks on Tao’s application delegate
-without replacing its existing lifecycle methods; do not install a second APNs
-delegate plugin alongside it.
+See [TESTFLIGHT.md](TESTFLIGHT.md) for release validation, required Apple steps,
+version increments, APNs `.p8` server configuration and current blockers. The
+new PM.ai icon is sourced from `assets/branding/app-icon.png`. The unsigned
+Release archive and LaunchScreen compile successfully. No signed TestFlight
+archive or live push delivery has been validated.
 
 ### Android
 
@@ -139,7 +137,7 @@ They use fake server responses and do not submit work to live provider accounts.
 SDK-only iOS code check when Tauri cannot discover a runnable iOS platform:
 
 ```sh
-IPHONEOS_DEPLOYMENT_TARGET=14.0 cargo check \
+IPHONEOS_DEPLOYMENT_TARGET=15.0 cargo check \
   --manifest-path apps/mobile/src-tauri/Cargo.toml --target aarch64-apple-ios
 ```
 

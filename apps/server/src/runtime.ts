@@ -2,6 +2,7 @@ import { createApp } from "../app.ts";
 import { Database } from "./db/database.ts";
 import { migrate } from "./db/migrate.ts";
 import { ControlPlane } from "./services/control_plane.ts";
+import { apnsTokenSupplier } from "./push/apns_token.ts";
 import {
   ApnsPushProvider,
   FcmPushProvider,
@@ -31,21 +32,41 @@ export async function createRuntime(): Promise<Runtime> {
   }
   const push: Partial<Record<"apns" | "fcm", PushProvider>> = {};
   const apnsTopic = Deno.env.get("PMAI_APNS_TOPIC"),
-    apnsTokenFile = Deno.env.get("PMAI_APNS_TOKEN_FILE"),
+    apnsKeyFile = Deno.env.get("PMAI_APNS_KEY_FILE"),
+    apnsKeyId = Deno.env.get("PMAI_APNS_KEY_ID"),
+    apnsTeamId = Deno.env.get("PMAI_APNS_TEAM_ID"),
     fcmProject = Deno.env.get("PMAI_FCM_PROJECT"),
     fcmTokenFile = Deno.env.get("PMAI_FCM_TOKEN_FILE");
-  if (apnsTopic && apnsTokenFile) {
-    push.apns = new ApnsPushProvider(
-      apnsTopic,
-      async () => (await Deno.readTextFile(apnsTokenFile)).trim(),
-      Deno.env.get("PMAI_APNS_SANDBOX") === "true",
-    );
-  }
-  if (fcmProject && fcmTokenFile) {
-    push.fcm = new FcmPushProvider(
-      fcmProject,
-      async () => (await Deno.readTextFile(fcmTokenFile)).trim(),
-    );
+  try {
+    if (
+      Deno.env.get("PMAI_APNS_TOKEN_FILE") ||
+      [apnsTopic, apnsKeyFile, apnsKeyId, apnsTeamId].some(Boolean) &&
+        ![apnsTopic, apnsKeyFile, apnsKeyId, apnsTeamId].every(Boolean)
+    ) {
+      throw new Error(
+        "Configure PMAI_APNS_KEY_FILE, PMAI_APNS_KEY_ID, PMAI_APNS_TEAM_ID and PMAI_APNS_TOPIC; pre-generated APNs tokens are no longer supported",
+      );
+    }
+    if (apnsTopic && apnsKeyFile && apnsKeyId && apnsTeamId) {
+      push.apns = new ApnsPushProvider(
+        apnsTopic,
+        apnsTokenSupplier({
+          keyFile: apnsKeyFile,
+          keyId: apnsKeyId,
+          teamId: apnsTeamId,
+        }),
+        Deno.env.get("PMAI_APNS_SANDBOX") === "true",
+      );
+    }
+    if (fcmProject && fcmTokenFile) {
+      push.fcm = new FcmPushProvider(
+        fcmProject,
+        async () => (await Deno.readTextFile(fcmTokenFile)).trim(),
+      );
+    }
+  } catch (error) {
+    await db.close();
+    throw error;
   }
   const service = new ControlPlane(db, {
     devSecret: Deno.env.get("PMAI_DEV_AUTH_SECRET"),

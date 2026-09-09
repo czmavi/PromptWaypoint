@@ -24,7 +24,7 @@ class CompanionNativePlugin: Plugin {
  func tokenError(){let requests=tokenRequests;tokenRequests=[];requests.forEach{$0.reject("APNs registration failed; check signing and push entitlement")}}
  @objc public func takeNotifications(_ invoke:Invoke){let pending=UserDefaults.standard.array(forKey:"companion.pending-notifications") as? [[String:String]] ?? [];UserDefaults.standard.removeObject(forKey:"companion.pending-notifications");invoke.resolve(["notifications":pending])}
 
- private let service = "com.martinvich.mobile.companion-auth"
+ private let service = "com.caretsix.aiproductmanager.companion-auth"
  private var query: [String: Any] { [kSecClass as String:kSecClassGenericPassword,kSecAttrService as String:service,kSecAttrAccount as String:"companion"] }
  @objc public func readAuth(_ invoke: Invoke) {
   var q=query;q[kSecReturnData as String]=true;q[kSecMatchLimit as String]=kSecMatchLimitOne
