@@ -1,11 +1,12 @@
 {
   "tasks": {
     "check": "deno fmt --check . && deno lint . && deno check",
-    "dev": "deno run --watch --allow-env --allow-net --allow-read main.ts",
-    "start": "deno run --allow-env --allow-net --allow-read main.ts",
-    "serve": "deno run --allow-env --allow-net --allow-read main.ts",
+    "dev": "vite --configLoader native",
+    "start": "deno run --allow-env --allow-net --allow-read serve.ts",
+    "serve": "deno task start",
     "migrate": "deno run --allow-env --allow-net --allow-read src/db/migrate.ts",
-    "test": "deno test --allow-env --allow-net --allow-read tests"
+    "test": "deno test --allow-env --allow-net --allow-read --allow-write --allow-run tests",
+    "build": "vite build --configLoader native"
   },
   "lint": {
     "rules": {
@@ -20,9 +21,18 @@
   ],
   "imports": {
     "fresh": "jsr:@fresh/core@^2.3.3",
-    "postgres": "npm:postgres@3.4.7"
+    "postgres": "npm:postgres@3.4.7",
+    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@1.1.2",
+    "vite": "npm:vite@^7.1.4",
+    "preact": "npm:preact@10.29.7",
+    "@types/babel__core": "npm:@types/babel__core@^7"
   },
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "types": [
+      "vite/client"
+    ],
+    "jsx": "precompile",
+    "jsxImportSource": "preact"
   }
 }

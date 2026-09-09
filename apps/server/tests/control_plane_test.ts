@@ -8,7 +8,7 @@ import { Database } from "../src/db/database.ts";
 import { migrate } from "../src/db/migrate.ts";
 import { ControlPlane } from "../src/services/control_plane.ts";
 import { issue } from "../src/auth/auth.ts";
-import { createApp } from "../main.ts";
+import { createApp } from "../app.ts";
 import type {
   Execution,
   ProfileMetadata,

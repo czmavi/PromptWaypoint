@@ -3,7 +3,8 @@
 Deno Fresh 2 API server with PostgreSQL persistence. The desktop/mobile apps
 remain separate; this server has no product frontend. Business logic lives under
 `src/`; `routes/api` and `routes/ws` register thin programmatic Fresh routes.
-Vite and the counter demo have been removed from the server's runtime.
+Fresh uses its official Vite plugin for development and production builds.
+Business services and transport handlers are shared by both modes.
 
 ## Start
 
@@ -11,14 +12,21 @@ Requires Deno 2.9+ and PostgreSQL 15+ with an empty application database. From
 the repository root, provide `DATABASE_URL` through the environment and run:
 
 ```sh
+# Development (Fresh + Vite, reload on changes)
+deno install
 deno task server
+# Equivalent: deno task --cwd apps/server dev
+
+# Production (build does not require DATABASE_URL)
+deno task --cwd apps/server build
+deno task --cwd apps/server start
 ```
 
-Startup applies ordered SQL migrations in a transaction protected by a
-PostgreSQL advisory lock. Alternatively run
-`deno task --cwd apps/server migrate` separately. The server defaults to
-`127.0.0.1:8000`. `/health` checks database connectivity. `/debug` is an
-authenticated, user-scoped JSON summary.
+On runtime initialization (first request in development), the server applies
+ordered SQL migrations in a transaction protected by a PostgreSQL advisory lock.
+Alternatively run `deno task --cwd apps/server migrate` separately. The server
+defaults to `127.0.0.1:8000`. `/health` checks database connectivity. `/debug`
+is an authenticated, user-scoped JSON summary.
 
 | Variable               | Purpose                                                            |
 | ---------------------- | ------------------------------------------------------------------ |
@@ -38,6 +46,23 @@ For remote operation, terminate HTTPS/WSS at a reverse proxy and proxy
 disabled. Do not expose plain HTTP authentication over an untrusted network.
 Normal native Tauri origins are allowed; browser development origins must be
 explicitly configured.
+
+`main.ts` exports the Fresh `app`; `app.ts` constructs the same routes for
+integration tests. `src/runtime.ts` owns database connections, migrations,
+scheduler, push processing and shutdown. Vite reloads close the preceding
+runtime before creating another, so background workers and agent connections are
+not duplicated. The native config loader lets Deno resolve the workspace's JSR
+imports without Vite bundling its own configuration.
+
+In development only, Vite proxies `/ws/agent` to an ephemeral loopback Deno
+listener because `Deno.upgradeWebSocket` cannot upgrade Vite's Node requests.
+Agents still connect to the same public port and use the same authentication.
+Production handles HTTP, SSE and WebSockets directly in Deno, without this
+proxy. `serve.ts` serves the generated `_fresh/server.js` while preserving
+`PMAI_SERVER_HOST` and `PORT`. SQL migrations are copied into the server build;
+deploy the whole `_fresh/` directory alongside `serve.ts` and the Deno workspace
+configuration/lockfile. The build is intended for a persistent Deno server
+process, including its existing background workers.
 
 ## Authentication and device pairing
 
@@ -247,6 +272,10 @@ and run
 Tests create unique user/device/task identities. Without this variable,
 PostgreSQL integration cases are explicitly skipped; `test:integration` always
 sets it.
+
+The tooling integration test builds without database credentials and exercises
+production startup on a fresh database, Vite development, authenticated HTTP,
+SSE and a real native WebSocket handshake.
 
 Tests cover offline create/queue, concurrent Run, duplicate mutations,
 dependency cycles, command transaction rollback, restart persistence, same
