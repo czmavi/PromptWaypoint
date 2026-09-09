@@ -32,7 +32,7 @@
     "types": [
       "vite/client"
     ],
-    "jsx": "precompile",
+    "jsx": "react-jsx",
     "jsxImportSource": "preact"
   }
 }

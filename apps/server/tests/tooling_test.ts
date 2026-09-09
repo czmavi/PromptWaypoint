@@ -32,6 +32,7 @@ Deno.test({
           PMAI_DEV_AUTH_SECRET: secret,
           PMAI_SERVER_HOST: "127.0.0.1",
           PORT: String(port),
+          PMAI_PUBLIC_URL: "https://example.com",
         },
         stdout: "piped",
         stderr: "piped",
@@ -54,6 +55,49 @@ Deno.test({
           await new Promise((r) => setTimeout(r, 100));
         }
         assert(ready, `${mode} did not become healthy`);
+        const home = await fetch(base);
+        const html = await home.text();
+        assert(
+          home.ok && home.headers.get("content-type")?.includes("text/html"),
+          `${mode}: public SSR`,
+        );
+        assert(
+          html.includes("Turn ideas into work"),
+          `${mode}: landing headline`,
+        );
+        assert(
+          (html.match(/<html\b/g) ?? []).length === 1,
+          `${mode}: valid document wrapper`,
+        );
+        assert(
+          html.includes('rel="canonical" href="https://example.com/"'),
+          `${mode}: configured SEO`,
+        );
+        assert(
+          html.includes('content="https://example.com/marketing/icon.png"'),
+          `${mode}: social preview`,
+        );
+        assert(!/<form\b|<input\b/.test(html), `${mode}: read-only page`);
+        if (mode === "production") {
+          assert(!/<script\b/.test(html), "no production client JavaScript");
+        }
+        for (
+          const [asset, contentType] of [["site.css", "text/css"], [
+            "brand.png",
+            "image/png",
+          ], [
+            "icon.png",
+            "image/png",
+          ]]
+        ) {
+          const response = await fetch(`${base}/marketing/${asset}`);
+          assert(
+            response.ok &&
+              response.headers.get("content-type")?.includes(contentType),
+            `${mode}: ${asset} served (${response.status})`,
+          );
+          await response.body?.cancel();
+        }
         const unauthenticated = await fetch(`${base}/api/snapshot`);
         await unauthenticated.body?.cancel();
         assert(unauthenticated.status === 401, `${mode}: auth guard`);

@@ -1,10 +1,48 @@
 # PM.ai control-plane server
 
 Deno Fresh 2 API server with PostgreSQL persistence. The desktop/mobile apps
-remain separate; this server has no product frontend. Business logic lives under
-`src/`; `routes/api` and `routes/ws` register thin programmatic Fresh routes.
-Fresh uses its official Vite plugin for development and production builds.
-Business services and transport handlers are shared by both modes.
+remain separate; this server serves a public read-only promotional page.
+Business logic lives under `src/`; `routes/api` and `routes/ws` register thin
+programmatic Fresh routes. Fresh uses its official Vite plugin for development
+and production builds. Business services and transport handlers are shared by
+both modes.
+
+## Public website
+
+`/` is a public Fresh SSR landing page. It contains static product examples, not
+account data, and does not query PostgreSQL or call business services. The
+server's existing runtime initialization still requires PostgreSQL.
+
+| Route          | Purpose                                                                   |
+| -------------- | ------------------------------------------------------------------------- |
+| `/`            | Public marketing page                                                     |
+| `/marketing/*` | Public stylesheet and existing PM.ai brand icon                           |
+| `/api/*`       | Existing authenticated PM.ai API (bootstrap login retains its own policy) |
+| `/ws/agent`    | Existing authenticated agent WebSocket handshake                          |
+| `/api/events`  | Existing authenticated SSE stream                                         |
+| `/mcp`         | Not implemented in this repository; existing missing-route response (400) |
+
+The requested MCP integration and optional AI Task Router are not implemented in
+this checkout. Both are clearly labelled **planned** on the website. This change
+does not introduce backend endpoints or change orchestration.
+
+Optional `PMAI_PUBLIC_URL` sets the public HTTP(S) origin used for canonical,
+Open Graph URL/image and Twitter image metadata, e.g. your actual deployment
+origin. Paths, queries and fragments are removed; invalid or credential-bearing
+URLs are ignored. Without it these absolute URLs are omitted. The social image
+reuses the existing 1024px PM.ai iOS icon; the header/favicon use an 80px copy
+to keep page downloads small. No production hostname is assumed.
+
+The page has no islands, forms, tracking, account UI or production JavaScript.
+FAQ disclosures and anchor navigation work natively, with responsive CSS and
+reduced-motion support. A restrictive page-only CSP blocks scripts and network
+connections; Fresh/Vite's development-only live-reload scripts may therefore be
+blocked on this route. Refresh the page manually during development. API, SSE
+and WebSocket responses retain their existing security behavior. Public static
+file handling is restricted to `/marketing/*` to avoid shadowing backend routes.
+The server uses Preact’s `react-jsx` transform so Vite development SSR receives
+ordinary VNodes rather than already-precompiled templates. Production SSR and
+development rendering are both covered by the tooling integration test.
 
 ## Start
 

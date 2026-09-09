@@ -1,4 +1,5 @@
-import { App } from "fresh";
+import { App, staticFiles } from "fresh";
+import { marketingPage } from "./routes/index.tsx";
 import type { State } from "./utils.ts";
 import { ControlPlane } from "./src/services/control_plane.ts";
 import { ApiError } from "./src/services/errors.ts";
@@ -70,14 +71,13 @@ export function createApp(
       }, { status });
     }
   });
-  app.get(
-    "/",
-    () =>
-      Response.json({
-        service: "PM.ai control plane",
-        api: "/api",
-        health: "/health",
-      }),
+  app.get("/", marketingPage);
+  // Restrict public assets to their own namespace; never shadow API routes.
+  const servePublicAsset = staticFiles<State>();
+  app.use((ctx) =>
+    ctx.url.pathname.startsWith("/marketing/")
+      ? servePublicAsset(ctx)
+      : ctx.next()
   );
   app.get("/health", async () => {
     await service.db.query("SELECT 1");
