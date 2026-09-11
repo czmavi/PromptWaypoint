@@ -1,4 +1,5 @@
 import { App, staticFiles } from "fresh";
+import { mcpRoutes } from "./routes/mcp.ts";
 import { marketingPage } from "./routes/index.tsx";
 import type { State } from "./utils.ts";
 import { ControlPlane } from "./src/services/control_plane.ts";
@@ -22,11 +23,18 @@ export function createApp(
         throw new ApiError(403, "Origin not allowed");
       }
       const cors = {
+        ...(path === "/mcp"
+          ? {
+            "Access-Control-Expose-Headers":
+              "MCP-Protocol-Version, MCP-Session-Id, WWW-Authenticate, Retry-After",
+          }
+          : {}),
         ...(origin
           ? { "Access-Control-Allow-Origin": origin, "Vary": "Origin" }
           : {}),
-        "Access-Control-Allow-Headers":
-          "Authorization, Content-Type, Idempotency-Key",
+        "Access-Control-Allow-Headers": path === "/mcp"
+          ? "Authorization, Content-Type, Idempotency-Key, MCP-Protocol-Version, MCP-Session-Id, Mcp-Method, Mcp-Param-Name, Mcp-Param-Uri, Accept"
+          : "Authorization, Content-Type, Idempotency-Key",
         "Access-Control-Allow-Methods":
           "GET, POST, PATCH, PUT, DELETE, OPTIONS",
       };
@@ -96,5 +104,6 @@ export function createApp(
   });
   apiRoutes(app, service);
   realtimeRoutes(app, service);
+  mcpRoutes(app, service);
   return app;
 }

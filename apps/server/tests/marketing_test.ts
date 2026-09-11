@@ -10,6 +10,7 @@ Deno.test("marketing SSR is public, static and independent of private services",
   // Any attempt to read auth, database, tasks, devices or sessions fails this test.
   const service = new Proxy({}, {
     get(_target, key) {
+      if (key === "onClose") return () => {};
       throw new Error(`Marketing accessed private service: ${String(key)}`);
     },
   }) as ControlPlane;
@@ -46,8 +47,8 @@ Deno.test("marketing SSR is public, static and independent of private services",
       "no internal state or links",
     );
     assert(
-      html.includes("Planned MCP"),
-      "unimplemented MCP is not advertised as live",
+      html.includes("MCP integration lets compatible AI clients"),
+      "MCP integration is described accurately",
     );
     assert(
       response.headers.get("Content-Security-Policy")?.includes(
@@ -70,8 +71,8 @@ Deno.test("marketing SSR is public, static and independent of private services",
   const mcp = await handler(new Request("http://localhost/mcp"));
   await mcp.body?.cancel();
   assert(
-    mcp.status === 400,
-    "existing catch-all behavior for absent MCP remains unchanged",
+    mcp.status === 401,
+    "MCP requires authentication",
   );
 });
 

@@ -8,7 +8,9 @@
     "./apps/server",
     "./apps/desktop",
     "./packages/ui",
-    "./apps/mobile"
+    "./apps/mobile",
+    "./packages/mcp",
+    "./apps/mcp"
   ],
   "exclude": [],
   "tasks": {
@@ -18,7 +20,10 @@
     "server": "deno task --cwd apps/server dev",
     "test:integration": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run apps/server/tests/with_postgres.ts",
     "desktop": "deno task --cwd apps/desktop dev",
-    "mobile": "deno task --cwd apps/mobile dev"
+    "mobile": "deno task --cwd apps/mobile dev",
+    "mcp": "deno run --allow-env --allow-net apps/mcp/main.ts",
+    "mcp:test": "deno test --allow-env --allow-net --allow-read --allow-run packages/mcp apps/mcp apps/server/tests/mcp_test.ts",
+    "mcp:smoke": "deno run --allow-env --allow-net apps/mcp/smoke.ts"
   },
   "nodeModulesDir": "auto"
 }

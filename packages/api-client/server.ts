@@ -12,6 +12,12 @@ import type {
   TaskInput,
   TaskPatch,
 } from "../protocol/main.ts";
+import type { TaskBatchInput } from "../protocol/batch.ts";
+export class ServerApiError extends Error {
+  constructor(public status: number, public detail?: string) {
+    super(`Server API ${status}`);
+  }
+}
 export class ServerClient {
   constructor(
     private baseUrl: string,
@@ -33,7 +39,16 @@ export class ServerClient {
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    if (!response.ok) throw new Error(`Server API ${response.status}`);
+    if (!response.ok) {
+      let detail: string | undefined;
+      if (response.status < 500) {
+        try {
+          const body = await response.json();
+          if (typeof body.error === "string") detail = body.error.slice(0, 500);
+        } catch { /* Non-JSON errors remain status-only. */ }
+      } else await response.body?.cancel();
+      throw new ServerApiError(response.status, detail);
+    }
     return response.json();
   }
   login(secret: string): Promise<{ user: User; token: string }> {
@@ -64,6 +79,12 @@ export class ServerClient {
   }
   createTask(task: TaskInput, key: string): Promise<Task> {
     return this.request("/api/tasks", "POST", task, key);
+  }
+  createTasks(
+    input: TaskBatchInput,
+    key: string,
+  ): Promise<{ tasks: Task[]; references: Record<string, string> }> {
+    return this.request("/api/tasks/batch", "POST", input, key);
   }
   editTask(taskId: string, patch: TaskPatch, key: string): Promise<Task> {
     return this.request(

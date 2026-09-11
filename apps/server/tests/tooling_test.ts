@@ -1,3 +1,8 @@
+import {
+  Client,
+  StreamableHTTPClientTransport,
+} from "npm:@modelcontextprotocol/client@2.0.0";
+
 const databaseURL = Deno.env.get("PMAI_TEST_DATABASE_URL");
 const cwd = new URL("../", import.meta.url);
 const secret = "tooling-test-bootstrap-secret-32-characters";
@@ -109,6 +114,31 @@ Deno.test({
         const { token } = await login.json();
         assert(login.ok && token, `${mode}: login`);
         const headers = { Authorization: `Bearer ${token}` };
+        const mcp = new Client({ name: "fresh-tooling-test", version: "1" }, {
+          versionNegotiation: { mode: { pin: "2026-07-28" } },
+        });
+        try {
+          await mcp.connect(
+            new StreamableHTTPClientTransport(new URL(`${base}/mcp`), {
+              requestInit: { headers },
+            }),
+          );
+          assert(
+            (await mcp.listTools()).tools.length === 14,
+            `${mode}: MCP discovery`,
+          );
+          assert(
+            !(await mcp.callTool({ name: "pmai_list_devices", arguments: {} }))
+              .isError,
+            `${mode}: MCP call`,
+          );
+          assert(
+            (await mcp.listResources()).resources.length === 2,
+            `${mode}: MCP resources`,
+          );
+        } finally {
+          await mcp.close();
+        }
         const snapshot = await fetch(`${base}/api/snapshot`, { headers });
         assert(
           snapshot.ok && Array.isArray((await snapshot.json()).tasks),

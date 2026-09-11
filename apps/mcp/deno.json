@@ -1,0 +1,10 @@
+{
+  "tasks": {
+    "start": "deno run --allow-env --allow-net main.ts"
+  },
+  "imports": {
+    "@modelcontextprotocol/server/stdio": "npm:@modelcontextprotocol/server@2.0.0/stdio",
+    "@modelcontextprotocol/client": "npm:@modelcontextprotocol/client@2.0.0",
+    "@modelcontextprotocol/client/stdio": "npm:@modelcontextprotocol/client@2.0.0/stdio"
+  }
+}

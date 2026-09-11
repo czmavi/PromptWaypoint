@@ -18,6 +18,8 @@ export interface ServerDevice extends Device {
 }
 export type TaskStatus = "inbox" | "ready" | "queued" | Execution["state"];
 export interface Task {
+  origin?: { type: "mcp"; client?: string };
+  executionMode?: "default" | "manual" | "recommend";
   id: string;
   repositoryId: string;
   title: string;

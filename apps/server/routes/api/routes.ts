@@ -126,6 +126,15 @@ export function apiRoutes(app: App<State>, service: ControlPlane) {
         await service.task(ctx.state.principal!.userId, id(ctx.params.id)),
       ),
   );
+  app.post("/api/tasks/batch", async (ctx) =>
+    Response.json(
+      await service.createTasks(
+        ctx.state.principal!.userId,
+        key(ctx.req),
+        await body(ctx.req),
+      ),
+      { status: 201 },
+    ));
   app.patch(
     "/api/tasks/:id",
     async (ctx) =>

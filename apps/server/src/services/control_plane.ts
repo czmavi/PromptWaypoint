@@ -20,6 +20,7 @@ import { Scheduler } from "../tasks/scheduler.ts";
 import { get } from "../repositories/store.ts";
 import { PushQueue } from "../push/queue.ts";
 import type { PushProvider } from "../push/providers.ts";
+import { createTaskBatch } from "../tasks/batch.ts";
 export class ControlPlane {
   auth: AuthProvider;
   private tokenAuth: TokenAuth;
@@ -36,6 +37,10 @@ export class ControlPlane {
   private work?: Promise<void>;
   private timer?: ReturnType<typeof setInterval>;
   private stopped = false;
+  private closers = new Set<() => Promise<void>>();
+  onClose(close: () => Promise<void>) {
+    this.closers.add(close);
+  }
   constructor(
     public db: Database,
     options: {
@@ -141,6 +146,9 @@ export class ControlPlane {
       (tx) => this.tasks.create(tx, userId, input),
     );
   }
+  createTasks(userId: string, key: string, input: unknown) {
+    return createTaskBatch(this, userId, key, input);
+  }
   editTask(userId: string, key: string, taskId: string, input: TaskPatch) {
     return this.mutations.run(
       userId,
@@ -226,6 +234,8 @@ export class ControlPlane {
   async close() {
     this.stopped = true;
     clearInterval(this.timer);
+    await Promise.all([...this.closers].map((close) => close()));
+    this.closers.clear();
     await this.work;
     await this.agents.close();
     this.clients.close();

@@ -20,11 +20,11 @@ server's existing runtime initialization still requires PostgreSQL.
 | `/api/*`       | Existing authenticated PM.ai API (bootstrap login retains its own policy) |
 | `/ws/agent`    | Existing authenticated agent WebSocket handshake                          |
 | `/api/events`  | Existing authenticated SSE stream                                         |
-| `/mcp`         | Not implemented in this repository; existing missing-route response (400) |
+| `/mcp`         | Authenticated MCP Streamable HTTP endpoint                                |
 
-The requested MCP integration and optional AI Task Router are not implemented in
-this checkout. Both are clearly labelled **planned** on the website. This change
-does not introduce backend endpoints or change orchestration.
+MCP integration is available for compatible clients with a configured Companion
+Bearer token. The optional AI Task Router remains planned. The public page never
+reads account data.
 
 Optional `PMAI_PUBLIC_URL` sets the public HTTP(S) origin used for canonical,
 Open Graph URL/image and Twitter image metadata, e.g. your actual deployment
@@ -103,6 +103,33 @@ proxy. `serve.ts` serves the generated `_fresh/server.js` while preserving
 deploy the whole `_fresh/` directory alongside `serve.ts` and the Deno workspace
 configuration/lockfile. The build is intended for a persistent Deno server
 process, including its existing background workers.
+
+## MCP integration
+
+`/mcp` adds the official MCP SDK v2 Streamable HTTP transport beside the API.
+The shared factory in `packages/mcp` is also used by the Deno stdio launcher in
+`apps/mcp`. Authentication reuses `AuthProvider`; every request binds operations
+to the authenticated user. OAuth linking/discovery is not yet implemented.
+
+Task batch creation is an additive `POST /api/tasks/batch` operation, also
+exposed by `ServerClient.createTasks`. It requires `Idempotency-Key`, validates
+1–50 inputs, generates task IDs inside the existing mutation transaction,
+preserves input order and prompts, then uses the existing dependency DAG checks.
+Any failure rolls back the batch. No creation path authorizes execution.
+Optional `origin` and `executionMode` fields live in the Task JSON body,
+requiring no schema migration. Existing create/edit/action endpoints remain
+compatible.
+
+MCP imposes 120 requests/minute and 10 creation calls/minute per user in the
+current single-process deployment, with a bounded in-memory limiter and the
+existing 1 MB request body limit. Tool handlers never query PostgreSQL directly.
+MCP-owned resources are closed with the existing control-plane lifecycle,
+including Vite reloads. Persistent MCP subscriptions are not enabled.
+
+See [MCP setup and tools](../mcp/README.md) for all tool/resource schemas,
+mutationId retry semantics, Claude Code configuration, remote smoke tests,
+Companion authentication and ChatGPT OAuth limitations. No MCP-specific secrets
+or new server auth environment variables are required.
 
 ## Authentication and device pairing
 

@@ -29,9 +29,11 @@
     "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@std/semver@^1.0.6": "1.0.8",
     "jsr:@std/uuid@^1.0.9": "1.1.1",
-    "npm:@anthropic-ai/claude-agent-sdk@0.3.261": "0.3.261_@anthropic-ai+sdk@0.124.0_@modelcontextprotocol+sdk@1.29.0_zod@4.4.3",
+    "npm:@anthropic-ai/claude-agent-sdk@0.3.261": "0.3.261_zod@4.4.3",
     "npm:@babel/core@^7.28.0": "7.29.7",
     "npm:@babel/preset-react@^7.27.1": "7.29.7_@babel+core@7.29.7",
+    "npm:@modelcontextprotocol/client@2.0.0": "2.0.0",
+    "npm:@modelcontextprotocol/server@2.0.0": "2.0.0",
     "npm:@opentelemetry/api@^1.9.0": "1.9.1",
     "npm:@preact/preset-vite@^2.9.3": "2.10.6_@babel+core@7.29.7_vite@7.3.6_rollup@4.62.2",
     "npm:@preact/signals@^2.5.1": "2.10.0_preact@10.29.7_preact-render-to-string@6.7.0",
@@ -61,7 +63,8 @@
     "npm:tailwindcss@^4.1.12": "4.3.3",
     "npm:typescript@~5.6.2": "5.6.3",
     "npm:vite@7.3.6": "7.3.6",
-    "npm:vite@^7.1.4": "7.3.6"
+    "npm:vite@^7.1.4": "7.3.6",
+    "npm:zod@4.4.3": "4.4.3"
   },
   "jsr": {
     "@deno/esbuild-plugin@1.2.1": {
@@ -230,7 +233,7 @@
       "os": ["win32"],
       "cpu": ["x64"]
     },
-    "@anthropic-ai/claude-agent-sdk@0.3.261_@anthropic-ai+sdk@0.124.0_@modelcontextprotocol+sdk@1.29.0_zod@4.4.3": {
+    "@anthropic-ai/claude-agent-sdk@0.3.261_zod@4.4.3": {
       "integrity": "sha512-CDG9z14JVKYRHjpp/g6zJ2k8xM5uSoRgjGdpTiK9woLDZxXtXcxV93ipCh55jQ3REj7M7H3GieMsETGZXB/ydw==",
       "dependencies": [
         "@anthropic-ai/sdk",
@@ -737,6 +740,24 @@
         "@jridgewell/sourcemap-codec"
       ]
     },
+    "@modelcontextprotocol/client@2.0.0": {
+      "integrity": "sha512-8f1OghQ2rjzIOfqgUCP+8GiUWqRs89njoWLNqAe8kWmDePv3s1fZXseej+QXemssEuuOvLLmLO/kqM3IQHtISw==",
+      "dependencies": [
+        "@modelcontextprotocol/core",
+        "cross-spawn",
+        "eventsource",
+        "eventsource-parser",
+        "jose",
+        "pkce-challenge",
+        "zod"
+      ]
+    },
+    "@modelcontextprotocol/core@2.0.0": {
+      "integrity": "sha512-pJCEwGG7Lfr/+PQp9ZTwKXNeO5wzbfKL7H3MYpCorM4oFBoQrdjnBgEoqG+RjhsvS1FKrDbKux+M1HhlnGWqcA==",
+      "dependencies": [
+        "zod"
+      ]
+    },
     "@modelcontextprotocol/sdk@1.29.0_zod@4.4.3": {
       "integrity": "sha512-zo37mZA9hJWpULgkRpowewez1y6ML5GsXJPY8FI0tBBCd77HEvza4jDqRKOXgHNn867PVGCyTdzqpz0izu5ZjQ==",
       "dependencies": [
@@ -757,6 +778,13 @@
         "raw-body",
         "zod",
         "zod-to-json-schema"
+      ]
+    },
+    "@modelcontextprotocol/server@2.0.0": {
+      "integrity": "sha512-YhHWdHfpFMQfd0prsEnxKeS3Qz3ytIGmsS0sth4KDjnacIT7hxk6hXHkJ9KysxlkvTM+WZAtQbbcUhdoP4Hvtw==",
+      "dependencies": [
+        "@modelcontextprotocol/core",
+        "zod"
       ]
     },
     "@opentelemetry/api@1.9.1": {
@@ -2615,6 +2643,12 @@
           ]
         }
       },
+      "apps/mcp": {
+        "dependencies": [
+          "npm:@modelcontextprotocol/client@2.0.0",
+          "npm:@modelcontextprotocol/server@2.0.0"
+        ]
+      },
       "apps/mobile": {
         "dependencies": [
           "npm:preact@10.29.7"
@@ -2642,6 +2676,13 @@
           "npm:postgres@3.4.7",
           "npm:preact@10.29.7",
           "npm:vite@^7.1.4"
+        ]
+      },
+      "packages/mcp": {
+        "dependencies": [
+          "npm:@modelcontextprotocol/client@2.0.0",
+          "npm:@modelcontextprotocol/server@2.0.0",
+          "npm:zod@4.4.3"
         ]
       },
       "packages/ui": {

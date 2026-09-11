@@ -1,0 +1,12 @@
+{
+  "name": "@pmai/mcp",
+  "version": "0.1.0",
+  "exports": "./server.ts",
+  "imports": {
+    "@modelcontextprotocol/server": "npm:@modelcontextprotocol/server@2.0.0",
+    "@modelcontextprotocol/server/stdio": "npm:@modelcontextprotocol/server@2.0.0/stdio",
+    "@modelcontextprotocol/client": "npm:@modelcontextprotocol/client@2.0.0",
+    "@modelcontextprotocol/client/stdio": "npm:@modelcontextprotocol/client@2.0.0/stdio",
+    "zod": "npm:zod@4.4.3"
+  }
+}

@@ -54,8 +54,8 @@ const features = [
   [
     "06",
     "Conversation → task",
-    "Planned MCP integration will let compatible AI clients turn a discussion into focused backlog items.",
-    "Planned · MCP",
+    "MCP integration lets compatible AI clients turn a discussion into focused backlog items. Creating tasks and starting work stay separate.",
+    "MCP",
   ],
   [
     "07",
@@ -95,7 +95,7 @@ const questions = [
   ],
   [
     "Can AI create tasks automatically?",
-    "MCP integration is planned for compatible AI clients to create backlog items from conversations. It is not available in this build. Creating a task and authorizing its execution are separate decisions.",
+    "Compatible MCP clients can create backlog items from conversations using your PM.ai account token. Creating a task and authorizing its execution are separate decisions. Clients that require OAuth account linking need a future authentication extension.",
   ],
   [
     "Is PM.ai an IDE?",
@@ -319,7 +319,7 @@ export function LandingPage({ canonical }: { canonical?: string }) {
             <div class="shell section split">
               <div>
                 <p class="eyebrow">
-                  MCP INTEGRATION <span class="planned-label">Planned</span>
+                  MCP INTEGRATION
                 </p>
                 <h2>
                   From AI conversation<br />to backlog.<br />
@@ -330,15 +330,14 @@ export function LandingPage({ canonical }: { canonical?: string }) {
                   somewhere to land.
                 </p>
                 <p>
-                  Planned MCP support will let compatible AI clients create and
-                  manage tasks directly from a discussion. Saving a task will
-                  not, by itself, start a coding agent. Execution remains an
-                  explicit decision.
+                  MCP lets compatible AI clients create and manage tasks
+                  directly from a discussion. Saving a task will not, by itself,
+                  start a coding agent. Execution remains an explicit decision.
                 </p>
               </div>
               <figure class="conversation">
                 <figcaption>
-                  Illustrative MCP workflow · coming later
+                  Illustrative MCP workflow
                 </figcaption>
                 <div class="chat-message">
                   <span class="chat-person">YOU</span>
