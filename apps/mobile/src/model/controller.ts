@@ -363,7 +363,7 @@ export class MobileController {
       this.online = false;
       this.authExpired = e instanceof Error && e.message.includes("401");
       this.error = this.authExpired
-        ? "Your Companion session expired. Sign in again."
+        ? "Your Prompt Waypoint session expired. Sign in again."
         : "Offline · your saved tasks are available";
       this.changed();
     }

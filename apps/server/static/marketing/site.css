@@ -1,11 +1,11 @@
 :root {
   color-scheme: light;
-  --paper: #fafaf6;
-  --ink: #202c27;
-  --muted: #626c65;
-  --green: #224f40;
-  --line: #dfe3da;
-  --soft: #f0f2eb;
+  --paper: #ffffff;
+  --ink: #17243b;
+  --muted: #52637b;
+  --accent: #2563eb;
+  --line: #dbe4f0;
+  --soft: #f1f6ff;
   font-family: Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   color: var(--ink);
   background: var(--paper);
@@ -27,7 +27,7 @@ a {
 }
 a:focus-visible,
 summary:focus-visible {
-  outline: 3px solid #42745e;
+  outline: 3px solid #3b82f6;
   outline-offset: 6px;
 }
 a:hover {
@@ -61,7 +61,7 @@ h3 {
 em {
   font-family: Georgia,"Times New Roman",serif;
   font-weight: normal;
-  color: var(--green);
+  color: var(--accent);
 }
 figure {
   margin: 0;
@@ -84,7 +84,7 @@ ol {
   letter-spacing: .15em;
   font-weight: 650;
   line-height: 1.6;
-  color: var(--green);
+  color: var(--accent);
   margin-bottom: 22px;
 }
 .section-heading {
@@ -117,7 +117,7 @@ ol {
 }
 .wordmark span {
   font-weight: 400;
-  color: var(--green);
+  color: var(--accent);
 }
 nav {
   display: flex;
@@ -133,11 +133,11 @@ nav a {
   gap: 8px;
   font-size: 11px;
   font-weight: 550;
-  background: #eef1e9;
-  border: 1px solid #d9e1d4;
+  background: #eff6ff;
+  border: 1px solid #cdddff;
   border-radius: 6px;
   padding: 11px 14px;
-  color: #395242;
+  color: #1d4ed8;
 }
 .skip-link {
   position: absolute;
@@ -173,7 +173,7 @@ nav a {
 .small-line {
   width: 24px;
   height: 1px;
-  background: var(--green);
+  background: var(--accent);
 }
 .hero-actions {
   display: flex;
@@ -186,13 +186,13 @@ nav a {
   gap: 32px;
   align-items: center;
   padding: 15px 20px;
-  background: var(--green);
+  background: var(--accent);
   color: white;
   border-radius: 6px;
   font-size: 13px;
 }
 .primary-link:hover {
-  background: #173d33;
+  background: #1d4ed8;
   text-decoration: none;
 }
 .hero-note {
@@ -201,10 +201,10 @@ nav a {
 }
 .product-preview {
   background: white;
-  border: 1px solid #d5dcd2;
+  border: 1px solid #dbe4f0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 18px 50px -28px #283e384d;
+  box-shadow: 0 18px 50px -28px #1e40af26;
   position: relative;
 }
 .preview-toolbar {
@@ -249,7 +249,7 @@ nav a {
   border: 1px solid var(--line);
   border-radius: 20px;
   padding: 8px 10px;
-  color: var(--green);
+  color: var(--accent);
 }
 .board {
   display: grid;
@@ -258,7 +258,7 @@ nav a {
   padding: 0 24px 28px;
 }
 .board-column {
-  background: #f6f7f2;
+  background: #f8faff;
   padding: 12px;
   border-radius: 7px;
   min-height: 230px;
@@ -275,11 +275,11 @@ nav a {
 .status-dot {
   height: 5px;
   width: 5px;
-  background: #7b847c;
+  background: #64748b;
   border-radius: 50%;
 }
 .running .status-dot {
-  background: #388166;
+  background: #3b82f6;
 }
 .waiting .status-dot {
   background: #a27b37;
@@ -291,13 +291,13 @@ nav a {
 .task-card {
   padding: 14px 12px;
   background: white;
-  border: 1px solid #e2e6de;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   margin-bottom: 10px;
 }
 .task-marker {
   display: block;
-  color: var(--green);
+  color: var(--accent);
   font-size: 15px;
   margin-bottom: 11px;
 }
@@ -315,7 +315,7 @@ nav a {
   margin-bottom: 15px;
 }
 .task-meta {
-  border-top: 1px solid #edf0e9;
+  border-top: 1px solid #edf2f9;
   padding-top: 9px;
   font-size: 8px;
   color: var(--muted);
@@ -343,7 +343,7 @@ nav a {
 }
 .separator {
   padding: 0 15px;
-  color: #bec7bc;
+  color: #cbd5e1;
 }
 .three-grid {
   display: grid;
@@ -353,7 +353,7 @@ nav a {
 .index {
   display: block;
   font: italic 28px Georgia,serif;
-  color: #66836e;
+  color: #426999;
   padding-bottom: 20px;
 }
 .three-grid h3 {
@@ -377,9 +377,9 @@ nav a {
 .step-number {
   display: block;
   font-size: 11px;
-  color: var(--green);
+  color: var(--accent);
   padding: 0 0 20px;
-  border-bottom: 1px solid #c9d5c7;
+  border-bottom: 1px solid #cdddff;
   margin-bottom: 24px;
 }
 .workflow h3 {
@@ -404,7 +404,7 @@ nav a {
   display: block;
   font-family: monospace;
   font-size: 11px;
-  color: #5c7964;
+  color: #426999;
   margin-bottom: 26px;
 }
 .feature h3 {
@@ -418,9 +418,9 @@ nav a {
   font: 500 9px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   letter-spacing: 0;
   padding: 3px 7px;
-  border: 1px solid #c9d3c3;
+  border: 1px solid #cdddff;
   border-radius: 4px;
-  color: #456044;
+  color: #1d4ed8;
   margin-bottom: 9px;
 }
 .split {
@@ -444,7 +444,7 @@ nav a {
   font-size: 12px!important;
 }
 .architecture-section {
-  background: #eff2eb;
+  background: #f1f6ff;
   border-block: 1px solid var(--line);
 }
 .architecture {
@@ -458,13 +458,13 @@ nav a {
 }
 .architecture-clients > div {
   background: #fff;
-  border: 1px solid #cfd9cc;
+  border: 1px solid #dbe4f0;
   border-radius: 7px;
   padding: 16px;
   flex: 1;
 }
 .connector {
-  color: #71836e;
+  color: #64748b;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -480,7 +480,7 @@ nav a {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  background: var(--green);
+  background: var(--accent);
   color: white;
   padding: 20px;
   border-radius: 7px;
@@ -491,13 +491,13 @@ nav a {
 }
 .server-node span {
   font-size: 10px;
-  color: #d3e1d1;
+  color: #dbeafe;
 }
 .local-boundary {
-  border: 1px dashed #a4b69d;
+  border: 1px dashed #a7c5fa;
   padding: 24px;
   border-radius: 8px;
-  background: #f8faf5;
+  background: #f8faff;
 }
 .local-boundary .eyebrow {
   font-size: 8px;
@@ -505,7 +505,7 @@ nav a {
 }
 .agent-node,
 .repo-node {
-  border: 1px solid #d5dfcd;
+  border: 1px solid #dbe4f0;
   background: white;
   padding: 13px;
   border-radius: 5px;
@@ -518,7 +518,7 @@ nav a {
   flex: 1;
   padding: 12px;
   border-radius: 4px;
-  background: #e8eedf;
+  background: #e5efff;
 }
 .architecture figcaption {
   font-size: 9px;
@@ -553,25 +553,25 @@ nav a {
   color: var(--ink);
 }
 .comparison p span {
-  color: #7d9078;
+  color: #64748b;
   margin-inline: 6px;
 }
 .comparison-pmai {
-  background: #eef2e7;
+  background: #eff6ff;
 }
 .mcp-section {
-  background: #f1f0e9;
+  background: #f1f6ff;
   border-block: 1px solid var(--line);
 }
 .mcp-section .eyebrow .planned-label {
   margin-left: 7px;
 }
 .conversation {
-  background: #fffefa;
-  border: 1px solid #dcded1;
+  background: #ffffff;
+  border: 1px solid #dbe4f0;
   border-radius: 10px;
   padding: 24px;
-  box-shadow: 0 12px 35px -28px #34412c;
+  box-shadow: 0 12px 35px -28px #1e3a5f;
 }
 .conversation figcaption {
   font-size: 9px;
@@ -585,7 +585,7 @@ nav a {
 .chat-person {
   font-size: 8px;
   letter-spacing: .13em;
-  color: var(--green);
+  color: var(--accent);
 }
 .chat-message p {
   font-size: 13px!important;
@@ -593,8 +593,8 @@ nav a {
   margin: 10px 0;
 }
 .ai-message {
-  background: #f2f5ec;
-  border: 1px solid #e2e7d8;
+  background: #f1f6ff;
+  border: 1px solid #dbe4f0;
   border-radius: 7px;
   padding: 18px;
   margin-top: 5px;
@@ -610,7 +610,7 @@ nav a {
   gap: 12px;
 }
 .ai-message li span {
-  color: var(--green);
+  color: var(--accent);
 }
 .chat-footnote {
   font-size: 9px;
@@ -630,18 +630,18 @@ nav a {
 }
 .mobile-benefits li:before {
   content: "↗";
-  color: var(--green);
+  color: var(--accent);
   margin-right: 12px;
 }
 .phone {
   width: 292px;
   max-width: 100%;
   justify-self: center;
-  background: #fafbf6;
-  border: 7px solid #263d32;
+  background: #ffffff;
+  border: 7px solid #1e3a5f;
   border-radius: 40px;
   padding: 18px 19px 20px;
-  box-shadow: 15px 25px 60px -30px #314c3855;
+  box-shadow: 15px 25px 60px -30px #1e40af33;
   transform: rotate(3deg);
 }
 .phone-top {
@@ -664,7 +664,7 @@ nav a {
   width: 26px;
   height: 26px;
   font-size: 10px;
-  background: #e8ecdf;
+  background: #e5efff;
   border-radius: 50%;
 }
 .phone-greeting {
@@ -679,7 +679,7 @@ nav a {
 .phone-stats > div {
   flex: 1;
   text-align: center;
-  background: #edf1e5;
+  background: #eff6ff;
   padding: 12px 3px;
   border-radius: 5px;
   font-size: 8px;
@@ -715,7 +715,7 @@ nav a {
 }
 .online {
   font-size: 8px;
-  color: var(--green);
+  color: var(--accent);
 }
 .phone-alert {
   padding: 14px;
@@ -742,7 +742,7 @@ nav a {
   color: #77612c;
 }
 .mock-button {
-  background: var(--green);
+  background: var(--accent);
   color: white;
   text-align: center;
   font-size: 11px;
@@ -780,7 +780,7 @@ summary::-webkit-details-marker {
 summary span {
   font-size: 19px;
   font-weight: 300;
-  color: var(--green);
+  color: var(--accent);
 }
 details[open] summary span {
   transform: rotate(45deg);
@@ -792,15 +792,15 @@ details p {
 .closing {
   padding: 65px 35px;
   text-align: center;
-  background: #eaf0e1;
-  border: 1px solid #dce5d1;
+  background: #eff6ff;
+  border: 1px solid #cdddff;
   border-radius: 10px;
 }
 .closing h2 {
   margin-bottom: 28px;
 }
 .closing .beta-label {
-  background: #f7f9f0;
+  background: #f8faff;
 }
 footer {
   display: flex;
@@ -1001,7 +1001,7 @@ footer > a:last-child {
   .step-number {
     grid-row: 1/3;
     border-bottom: 0;
-    border-right: 1px solid #c9d5c7;
+    border-right: 1px solid #cdddff;
     margin: 0;
     padding: 2px 10px 0 0;
   }

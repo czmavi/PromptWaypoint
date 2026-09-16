@@ -11,5 +11,5 @@ pub fn run() {
 
     builder
         .run(tauri::generate_context!())
-        .expect("error running Companion mobile");
+        .expect("error running Prompt Waypoint mobile");
 }

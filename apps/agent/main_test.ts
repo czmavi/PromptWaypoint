@@ -264,46 +264,53 @@ Deno.test("reconnect backoff bounded and queued events persist across restart", 
     await Deno.remove(dir, { recursive: true });
   }
 });
-Deno.test("server reconnect re-uploads unacknowledged events with stable IDs", async () => {
+Deno.test("HTTPS retries retain event IDs and upload no provider credentials", async () => {
   const f = fixture();
-  const sockets: { sent: string[]; socket: WebSocket }[] = [];
-  const connect = () => {
-    const sent: string[] = [];
-    const socket = {
-      readyState: WebSocket.OPEN,
-      send: (s: string) => sent.push(s),
-      close() {},
-      onopen: null,
-      onmessage: null,
-      onclose: null,
-    } as unknown as WebSocket;
-    sockets.push({ sent, socket });
-    return socket;
-  };
-  const sync = new ServerSync(f.agent, "wss://example.test", "secret", connect);
+  const event = f.store.event("test", {});
+  let attempts = 0;
+  const seen: string[] = [];
+  const sync = new ServerSync(
+    f.agent,
+    "https://example.test",
+    "secret",
+    (_input, init) => {
+      const body = JSON.parse(String(init?.body));
+      ok(!String(init?.body).includes("configDirectory"));
+      if (body.device) {
+        return Promise.resolve(
+          Response.json({ sessionId: body.sessionId }),
+        );
+      }
+      seen.push(body.events[0].id);
+      if (++attempts === 1) return Promise.reject(new Error("lost response"));
+      return Promise.resolve(
+        Response.json({
+          sessionId: body.sessionId,
+          eventIds: [event.id],
+          acknowledged: [],
+          commands: [],
+          pollAfterMs: 4000,
+        }),
+      );
+    },
+  );
   try {
-    const event = f.store.event("test", {});
     sync.start();
-    const s = sockets[0];
-    s.socket.onopen!(new Event("open"));
-    s.socket.onmessage!(
-      new MessageEvent("message", {
-        data: JSON.stringify({ type: "welcome" }),
-      }),
-    );
-    ok(s.sent.some((s) => s.includes(event.id)));
-    ok(!s.sent.some((s) => s.includes("configDirectory")));
-    s.socket.onmessage!(
-      new MessageEvent("message", {
-        data: JSON.stringify({ type: "eventAck", eventId: event.id }),
-      }),
-    );
-    equal(f.store.all("outbox").length, 0);
+    await waitFor(() => f.store.all("outbox").length === 0);
+    equal(seen, [event.id, event.id]);
   } finally {
     sync.close();
     await f.close();
   }
 });
+async function waitFor(check: () => boolean, timeout = 5000) {
+  const end = Date.now() + timeout;
+  while (Date.now() < end) {
+    if (check()) return;
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  throw new Error("Condition timed out");
+}
 Deno.test("proven pre-submit crash returns task to READY without retry", async () => {
   const f = fixture();
   try {
@@ -344,62 +351,52 @@ Deno.test("read deadline protects local API from stalled provider", async () => 
     await f.close();
   }
 });
-Deno.test("real WebSocket disconnect reconnects and replays stable command once", async () => {
+Deno.test("lost HTTP response redelivers a stable command only once", async () => {
   const f = fixture();
-  let connections = 0;
-  let results = 0;
-  const sockets = new Set<WebSocket>();
-  let done!: () => void;
-  const completed = new Promise<void>((resolve) => {
-    done = resolve;
-  });
+  let uploads = 0;
+  let lost = false;
   const server = Deno.serve(
     { hostname: "127.0.0.1", port: 0, onListen() {} },
-    (req) => {
-      const { socket, response } = Deno.upgradeWebSocket(req);
-      sockets.add(socket);
-      socket.onmessage = (event) => {
-        const m = JSON.parse(event.data);
-        if (m.type === "hello") {
-          connections++;
-          socket.send(JSON.stringify({ type: "welcome" }));
-          socket.send(JSON.stringify({ type: "command", command: f.command }));
-        }
-        if (m.type === "commandResult") {
-          results++;
-          if (results === 1) socket.close();
-          else done();
-        }
-      };
-      socket.onclose = () => sockets.delete(socket);
-      return response;
+    async (req) => {
+      const body = await req.json();
+      if (body.device) return Response.json({ sessionId: body.sessionId });
+      const results = body.events.filter((e: { type: string }) =>
+        e.type === "commandResult"
+      );
+      if (results.length && !lost) {
+        lost = true;
+        return new Response("retry", { status: 503 });
+      }
+      uploads += results.length;
+      return Response.json({
+        sessionId: body.sessionId,
+        eventIds: body.events.map((e: { id: string }) => e.id),
+        acknowledged: body.acknowledged,
+        commands: [f.command],
+        pollAfterMs: 1000,
+      });
     },
   );
   const sync = new ServerSync(
     f.agent,
-    "wss://test.invalid",
+    "https://test.invalid",
     "device-token",
-    () => new WebSocket(`ws://127.0.0.1:${server.addr.port}`),
+    (input, init) =>
+      fetch(
+        new URL(
+          new URL(String(input)).pathname,
+          `http://127.0.0.1:${server.addr.port}`,
+        ),
+        init,
+      ),
   );
-  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     sync.start();
-    await Promise.race([
-      completed,
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error("Reconnect timed out")),
-          5000,
-        );
-      }),
-    ]);
-    equal(connections, 2);
+    await waitFor(() => uploads >= 2);
     equal(f.fake.prompts, 1);
-    equal(results, 2);
+    equal(lost, true);
   } finally {
-    clearTimeout(timer);
     sync.close();
-    for (const s of sockets) s.close();
     await server.shutdown();
     await f.close();
   }
@@ -473,6 +470,57 @@ Deno.test("refresh republishes terminal executions for offline desktop synchroni
       ),
     );
   } finally {
+    await f.close();
+  }
+});
+
+Deno.test("sync continues and ACKs durably while provider dispatch is stalled", async () => {
+  const f = fixture();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => release = resolve);
+  const prompt = f.fake.prompt.bind(f.fake);
+  f.fake.prompt = async (...args: Parameters<typeof prompt>) => {
+    await gate;
+    return prompt(...args);
+  };
+  let polls = 0;
+  let acked = false;
+  const sync = new ServerSync(
+    f.agent,
+    "https://test.invalid",
+    "device-token",
+    (_input, init) => {
+      const body = JSON.parse(String(init!.body));
+      if (body.device) {
+        return Promise.resolve(
+          Response.json({ sessionId: body.sessionId }),
+        );
+      }
+      polls++;
+      if (body.acknowledged.includes(f.command.commandId)) {
+        ok(f.store.get("commands", f.command.commandId));
+        acked = true;
+      }
+      return Promise.resolve(
+        Response.json({
+          sessionId: body.sessionId,
+          eventIds: body.events.map((e: { id: string }) => e.id),
+          acknowledged: body.acknowledged,
+          commands: [f.command],
+          pollAfterMs: 1000,
+        }),
+      );
+    },
+  );
+  try {
+    sync.start();
+    await waitFor(() => polls >= 3 && acked);
+    equal(f.fake.prompts, 0);
+    release();
+    await waitFor(() => f.fake.prompts === 1);
+  } finally {
+    release();
+    sync.close();
     await f.close();
   }
 });

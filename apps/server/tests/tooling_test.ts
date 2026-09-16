@@ -12,7 +12,7 @@ function assert(value: unknown, message: string): asserts value {
 
 Deno.test({
   name:
-    "Vite development and production build preserve HTTP, SSE and native WebSocket",
+    "Vite development and production build preserve HTTP, revisions and agent sync",
   ignore: !databaseURL,
   async fn() {
     const build = await new Deno.Command(Deno.execPath(), {
@@ -44,8 +44,6 @@ Deno.test({
       }).spawn();
       const output = process.output();
       const base = `http://127.0.0.1:${port}`;
-      let socket: WebSocket | undefined;
-      const abort = new AbortController();
       try {
         let ready = false;
         for (let attempt = 0; attempt < 100; attempt++) {
@@ -144,18 +142,11 @@ Deno.test({
           snapshot.ok && Array.isArray((await snapshot.json()).tasks),
           `${mode}: snapshot`,
         );
-        const events = await fetch(`${base}/api/events`, {
-          headers,
-          signal: abort.signal,
-        });
+        const revision = await fetch(`${base}/api/revision`, { headers });
         assert(
-          events.headers.get("content-type")?.includes("text/event-stream"),
-          `${mode}: SSE`,
+          revision.ok && typeof (await revision.json()).revision === "string",
+          `${mode}: revision`,
         );
-        const reader = events.body!.getReader();
-        const first = await reader.read();
-        assert(first.value?.length, `${mode}: SSE first event`);
-        await reader.cancel();
         const device = {
           id: crypto.randomUUID(),
           name: "Vite smoke",
@@ -168,52 +159,51 @@ Deno.test({
         });
         const registration = await paired.json();
         assert(paired.ok && registration.token, `${mode}: device pairing`);
-        socket = new WebSocket(`${base.replace("http:", "ws:")}/ws/agent`);
-        const ws = socket;
-        await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(
-            () => reject(new Error(`${mode}: WebSocket timeout`)),
-            5000,
-          );
-          ws.onopen = () =>
-            ws.send(
-              JSON.stringify({
-                type: "hello",
-                version: 1,
-                token: registration.token,
-                device,
-              }),
-            );
-          ws.onerror = () => {
-            clearTimeout(timeout);
-            reject(new Error(`${mode}: WebSocket failed`));
-          };
-          ws.onmessage = (event) => {
-            clearTimeout(timeout);
-            if (JSON.parse(event.data).type === "welcome") resolve();
-            else reject(new Error(`${mode}: unexpected agent response`));
-          };
+        const sessionId = crypto.randomUUID();
+        const agentHeaders = {
+          Authorization: `Bearer ${registration.token}`,
+          "Content-Type": "application/json",
+        };
+        const connect = await fetch(`${base}/api/agent/connect`, {
+          method: "POST",
+          headers: agentHeaders,
+          body: JSON.stringify({
+            sessionId,
+            generation: 1,
+            device,
+            profiles: [],
+            repositories: [],
+          }),
         });
+        assert(
+          connect.ok && (await connect.json()).sessionId === sessionId,
+          `${mode}: agent connect`,
+        );
+        const syncAgent = async () => {
+          const response = await fetch(`${base}/api/agent/sync`, {
+            method: "POST",
+            headers: agentHeaders,
+            body: JSON.stringify({
+              sessionId,
+              events: [],
+              hasMore: false,
+              acknowledged: [],
+            }),
+          });
+          assert(
+            response.ok && (await response.json()).sessionId === sessionId,
+            `${mode}: agent sync`,
+          );
+        };
+        await syncAgent();
         if (mode === "dev") {
           // Trigger Vite's file watcher without editing source contents.
           const entry = new URL("main.ts", cwd);
           const before = await Deno.stat(entry);
-          const closed = new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(
-              () =>
-                reject(
-                  new Error("Reload did not close the old agent connection"),
-                ),
-              5000,
-            );
-            ws.onclose = () => {
-              clearTimeout(timeout);
-              resolve();
-            };
-          });
           try {
             await Deno.utime(entry, new Date(), new Date());
-            await closed;
+            await new Promise((r) => setTimeout(r, 500));
+            await syncAgent();
             const refreshed = await fetch(`${base}/health`);
             assert(
               refreshed.ok && (await refreshed.json()).ok,
@@ -234,8 +224,6 @@ Deno.test({
           }
         }
       } finally {
-        abort.abort();
-        socket?.close();
         try {
           process.kill("SIGTERM");
         } catch { /* Already exited. */ }

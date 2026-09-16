@@ -1,15 +1,15 @@
 @import "tailwindcss";
 :root {
   font-family: Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  color: #2d332d;
-  background: #f5f6f1;
+  color: #1e293b;
+  background: #f8faff;
   font-synthesis: none;
   font-size: 14px;
-  --accent: #395e42;
-  --muted: #858d80;
-  --line: #e4e8de;
+  --accent: #2563eb;
+  --muted: #64748b;
+  --line: #dbe4f0;
   --surface: #fff;
-  --soft: #f6f8f2;
+  --soft: #f1f6ff;
 }
 * {
   box-sizing: border-box;
@@ -46,7 +46,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible {
-  outline: 2px solid #779873;
+  outline: 2px solid #3b82f6;
   outline-offset: 3px;
 }
 .primary {
@@ -55,7 +55,7 @@ summary:focus-visible {
   border-color: var(--accent);
 }
 .primary:hover {
-  background: #496f50;
+  background: #1d4ed8;
 }
 input,
 textarea,
@@ -127,8 +127,8 @@ h3 {
   min-height: 32px;
 }
 .sync-bar.synced {
-  color: #748269;
-  background: #f6f8f2;
+  color: #64748b;
+  background: #f1f6ff;
 }
 .sync-bar button {
   border: 0;
@@ -160,7 +160,7 @@ h3 {
 }
 .capture-circle {
   border: 0;
-  background: #eef2e8;
+  background: #eff6ff;
   border-radius: 50%;
   font-size: 24px;
   min-width: 44px;
@@ -184,11 +184,11 @@ h3 {
   padding: 18px;
   border-radius: 12px;
   margin: 24px 0;
-  box-shadow: 0 4px 10px #32462c12;
+  box-shadow: 0 4px 10px #1e40af12;
 }
 .capture-hero span:last-child {
   font-size: 10px;
-  color: #cfddc8;
+  color: #dbeafe;
   font-weight: 400;
 }
 .counts {
@@ -215,8 +215,8 @@ h3 {
 }
 .counts .selected,
 .filters .selected {
-  background: #eef4e7;
-  border-color: #c2d4b6;
+  background: #eff6ff;
+  border-color: #bfdbfe;
 }
 .section-heading {
   display: flex;
@@ -260,13 +260,13 @@ h3 {
 .status-dot {
   width: 6px;
   height: 6px;
-  background: #b2b7ac;
+  background: #94a3b8;
   border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
 }
 .presence.online {
-  background: #739064;
+  background: #3b82f6;
 }
 .task-group {
   margin: 23px 0;
@@ -301,7 +301,7 @@ h3 {
 .task-check {
   width: 18px;
   height: 18px;
-  border: 1px solid #d7dfcd;
+  border: 1px solid #dbe4f0;
   border-radius: 6px;
   flex-shrink: 0;
   line-height: 15px;
@@ -309,7 +309,7 @@ h3 {
   color: var(--accent);
 }
 .task-check-running {
-  background: #eff5e9;
+  background: #eff6ff;
 }
 .task-card-content {
   flex: 1;
@@ -344,15 +344,15 @@ h3 {
   gap: 5px;
   align-items: center;
   font-size: 9px;
-  color: #7c8873;
+  color: #64748b;
   white-space: nowrap;
 }
 .status-running,
 .status-dispatching {
-  color: #668b51;
+  color: #1d4ed8;
 }
 .status-running .status-dot {
-  background: #789c64;
+  background: #3b82f6;
 }
 .status-waiting_input,
 .status-waiting_quota {
@@ -387,7 +387,7 @@ h3 {
   font-size: 10px;
   background: transparent;
   border: 0;
-  color: #9ca491;
+  color: #94a3b8;
   padding: 4px;
 }
 .bottom-nav button > span {
@@ -406,7 +406,7 @@ h3 {
 }
 .empty > span {
   font-size: 38px;
-  color: #a9b39d;
+  color: #94a3b8;
 }
 .empty h2 {
   margin: 12px 0;
@@ -474,10 +474,10 @@ h3 {
   place-items: center;
   width: 35px;
   height: 35px;
-  border: 1px solid #e0e6d9;
+  border: 1px solid #dbe4f0;
   border-radius: 10px;
   background: var(--soft);
-  color: #789069;
+  color: #426999;
 }
 .filters {
   display: flex;
@@ -735,7 +735,9 @@ h3 {
   height: 35px;
   line-height: 34px;
   text-align: center;
-  font: 32px Georgia;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 .welcome h1 {
   font-size: 34px;

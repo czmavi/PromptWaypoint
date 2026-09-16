@@ -30,7 +30,7 @@ class CompanionNativePlugin: Plugin {
   var q=query;q[kSecReturnData as String]=true;q[kSecMatchLimit as String]=kSecMatchLimitOne
   var result:CFTypeRef?;let status=SecItemCopyMatching(q as CFDictionary,&result)
   if status==errSecItemNotFound {invoke.resolve(["value":""]);return}
-  guard status==errSecSuccess,let data=result as? Data,let value=String(data:data,encoding:.utf8) else {invoke.reject("Companion Keychain read failed: \(status)");return}
+  guard status==errSecSuccess,let data=result as? Data,let value=String(data:data,encoding:.utf8) else {invoke.reject("Prompt Waypoint Keychain read failed: \(status)");return}
   invoke.resolve(["value":value])
  }
  @objc public func writeAuth(_ invoke: Invoke) throws {
@@ -38,9 +38,9 @@ class CompanionNativePlugin: Plugin {
   let attributes:[String:Any]=[kSecValueData as String:Data(args.value.utf8),kSecAttrAccessible as String:kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly]
   var status=SecItemUpdate(query as CFDictionary,attributes as CFDictionary)
   if status==errSecItemNotFound {var q=query;attributes.forEach{q[$0.key]=$0.value};status=SecItemAdd(q as CFDictionary,nil)}
-  guard status==errSecSuccess else {invoke.reject("Companion Keychain write failed: \(status)");return};invoke.resolve()
+  guard status==errSecSuccess else {invoke.reject("Prompt Waypoint Keychain write failed: \(status)");return};invoke.resolve()
  }
- @objc public func clearAuth(_ invoke: Invoke) {let status=SecItemDelete(query as CFDictionary);if status==errSecSuccess||status==errSecItemNotFound{invoke.resolve()}else{invoke.reject("Companion Keychain delete failed: \(status)")}}
+ @objc public func clearAuth(_ invoke: Invoke) {let status=SecItemDelete(query as CFDictionary);if status==errSecSuccess||status==errSecItemNotFound{invoke.resolve()}else{invoke.reject("Prompt Waypoint Keychain delete failed: \(status)")}}
 }
 @_cdecl("init_plugin_companion_native")
 func initPlugin()->Plugin { UNUserNotificationCenter.current().delegate=PushBridge.shared;return CompanionNativePlugin() }

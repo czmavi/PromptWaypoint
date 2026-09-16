@@ -10,7 +10,7 @@ configs:
 settingGroups:
   app:
     base:
-      PRODUCT_NAME: "PM.ai"
+      PRODUCT_NAME: "Prompt Waypoint"
       PRODUCT_BUNDLE_IDENTIFIER: com.caretsix.aiproductmanager
       CODE_SIGN_STYLE: Automatic
 targetTemplates:
@@ -40,7 +40,7 @@ targets:
     info:
       path: mobile_iOS/Info.plist
       properties:
-        CFBundleDisplayName: "PM.ai"
+        CFBundleDisplayName: "Prompt Waypoint"
         ITSAppUsesNonExemptEncryption: false
         CFBundleURLTypes:
           - CFBundleURLSchemes: [pmai]

@@ -65,8 +65,13 @@ Deno.test("local cwd resolution requires exact path and same registered device",
     undefined,
   );
 });
-Deno.test("stdio config requires Companion auth, isolates tokens and never follows redirects", async () => {
+Deno.test("stdio config requires Prompt Waypoint auth, isolates tokens and never follows redirects", async () => {
   throws(() => readConfig(() => undefined));
+  strictEqual(
+    readConfig((name) => name === "PMAI_CLIENT_TOKEN" ? "token" : undefined)
+      .serverUrl,
+    "https://promptwaypoint.com",
+  );
   throws(() =>
     readConfig((name) =>
       ({
@@ -84,10 +89,16 @@ Deno.test("stdio config requires Companion auth, isolates tokens and never follo
     )
   );
   const seen: string[] = [];
-  const transport: typeof fetch = (_input, init) => {
+  const transport: typeof fetch = (input, init) => {
     seen.push(new Headers(init?.headers).get("authorization")!);
     strictEqual(init?.redirect, "error");
-    return Promise.resolve(Response.json(snapshot()));
+    return Promise.resolve(
+      Response.json(
+        String(input).endsWith("/api/revision")
+          ? { revision: "1" }
+          : snapshot(),
+      ),
+    );
   };
   await clientMcpContext(
     { serverUrl: "https://example.com", clientToken: "one" },
@@ -99,7 +110,7 @@ Deno.test("stdio config requires Companion auth, isolates tokens and never follo
     "/",
     transport,
   ).snapshot();
-  strictEqual(seen.join(","), "Bearer one,Bearer two");
+  strictEqual(seen.join(","), "Bearer one,Bearer one,Bearer two,Bearer two");
   const context = clientMcpContext(
     { serverUrl: "https://example.com", clientToken: "secret" },
     "/",

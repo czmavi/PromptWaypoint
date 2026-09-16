@@ -1,8 +1,13 @@
-# PM.ai
+# Prompt Waypoint
 
 AI-native task management and orchestration for local coding agents. A Task is
 one focused prompt for one repository. Creating a task does not run it; Run,
 Queue and Resume express separate execution intent.
+
+The default server is **https://promptwaypoint.com**. Desktop and mobile prefill
+this address; the Local Agent and MCP use it unless `PMAI_SERVER_URL` is set.
+Authentication tokens are still required. Existing installation IDs, storage
+keys, `PMAI_*` environment variables and `pmai://` links remain compatible.
 
 ## Architecture
 
@@ -15,7 +20,7 @@ Claude Code / Codex / other hosts
  apps/mcp          apps/server /mcp
        └── packages/mcp ─┘
                  │
-     Existing PM.ai API/services
+     Existing Prompt Waypoint API/services
                  │
         PostgreSQL task backlog
                  │
@@ -48,10 +53,10 @@ deno task desktop
 deno task mobile
 ```
 
-MCP uses the existing Companion client token:
+MCP uses the existing Prompt Waypoint client token:
 
 ```sh
-# Set PMAI_SERVER_URL and PMAI_CLIENT_TOKEN through your environment.
+# Set PMAI_CLIENT_TOKEN. PMAI_SERVER_URL defaults to https://promptwaypoint.com.
 deno task mcp
 # Read-only check of an existing remote endpoint:
 deno task mcp:smoke

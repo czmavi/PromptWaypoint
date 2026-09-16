@@ -379,10 +379,10 @@
           "markdownDescription": "Denies the write_auth command without any pre-configured scope."
         },
         {
-          "description": "Companion authentication storage only.\n#### This default permission set includes:\n\n- `allow-read-auth`\n- `allow-write-auth`\n- `allow-clear-auth`",
+          "description": "Prompt Waypoint authentication storage only.\n#### This default permission set includes:\n\n- `allow-read-auth`\n- `allow-write-auth`\n- `allow-clear-auth`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Companion authentication storage only.\n#### This default permission set includes:\n\n- `allow-read-auth`\n- `allow-write-auth`\n- `allow-clear-auth`"
+          "markdownDescription": "Prompt Waypoint authentication storage only.\n#### This default permission set includes:\n\n- `allow-read-auth`\n- `allow-write-auth`\n- `allow-clear-auth`"
         }
       ]
     }

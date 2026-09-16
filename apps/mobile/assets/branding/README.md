@@ -1,20 +1,35 @@
-# PM.ai app icon
+# Prompt Waypoint app icon
 
-Generated with the built-in image generation tool on 2026-09-09. `app-icon.png`
-is the original opaque square master. iOS sizes are generated with Tauri's icon
-tooling. The mark combines task cards and a forward/run symbol in forest green,
-warm ivory and sage, matching the task-focused mobile app.
+`app-icon.png` is the opaque square master shared by desktop, mobile and web.
+The mark combines stacked task cards and a forward/run symbol. The original
+artwork was generated on 2026-09-09 and recolored with the built-in imagegen
+tool on 2026-09-16, preserving its silhouette. The current palette is royal
+blue, white and sky blue, matching the white-and-blue application theme.
 
-Final generation prompt:
+## Final edit prompt
 
-> Use case: logo-brand. Create one finished iOS app icon master for PM.ai, a
-> calm professional app for capturing tasks and controlling AI coding agents
-> across computers. Square 1024x1024 opaque PNG artwork, full bleed, no
-> pre-rounded corners. Use a deep forest-green background and a single bold
-> warm-ivory geometric symbol suggesting an organized stack of task cards
-> becoming a forward arrow; a small sage accent may distinguish the active task.
-> Extremely simple distinctive silhouette, generous centered margins, legible at
-> 40 pixels, crisp polished flat graphic design, subtle depth only if helpful.
-> No letters, no words, no tiny details, no robot, no brain, no sparkles, no
-> gradients that impair contrast, no mockup, no device, no border, no watermark.
-> This is the actual app icon asset, not a presentation.
+> Edit target: the attached existing Prompt Waypoint app icon. Perform a
+> color-only rebrand to blue and white. Preserve the exact stacked task-card /
+> forward-arrow silhouette, geometry, layout, perspective, sizes, spacing,
+> rounded shape corners and generous margins. Replace the forest-green
+> background with saturated royal blue close to #2563EB, replace warm ivory
+> symbol areas with clean white #FFFFFF, and replace the sage middle card with
+> soft sky blue #93C5FD. Keep the artwork crisp and polished, with at most the
+> existing subtle depth. Full bleed square opaque image, 1024x1024 or larger, no
+> outer rounded app-icon mask. No green, no teal, no cream, no text, no new
+> elements, no mockup. This is the production icon bitmap for a white-and-blue
+> software interface.
+
+## Derived assets
+
+Generate platform sizes with Tauri's icon tooling from this master. Desktop
+icons live in `apps/desktop/src-tauri/icons/`, mobile icons in
+`apps/mobile/src-tauri/icons/`, and Android launcher icons in its generated
+project's `app/src/main/res/mipmap-*` directories. The web uses a 1024px
+`apps/server/static/marketing/icon.png` and an 80px `brand.png`.
+
+Canonical iOS PNGs in `src-tauri/icons/ios/` must be RGB without an alpha
+channel, including the App Store icon. After generating sizes, remove the opaque
+alpha channel, run `deno task ios:icons:sync` from `apps/mobile`, and verify
+with `deno task ios:check`. The sync task restores the canonical icons into the
+generated Xcode asset catalog.

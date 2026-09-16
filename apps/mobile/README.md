@@ -1,8 +1,8 @@
-# Companion Mobile
+# Prompt Waypoint Mobile
 
 Tauri 2 Mobile, Preact, TypeScript, Tailwind CSS and Deno. Mobile communicates
-only with the Companion server. It never connects directly to a Local Agent or
-reads provider credentials.
+only with the Prompt Waypoint server. It never connects directly to a Local
+Agent or reads provider credentials.
 
 ## Run and connect
 
@@ -16,13 +16,14 @@ The browser preview runs on port 1430. Add its development origin to the
 server’s explicit CORS allowlist for browser testing. A phone requires an HTTPS
 server reachable from that phone. `localhost` refers to the phone itself.
 
-Connect using the server URL and a Companion user token. Native builds store
-Companion authentication in iOS Keychain or Android Keystore (AES-GCM encrypted
-private preferences). Browser previews keep the token in memory only. Cached
-snapshots and pending changes are scoped to the server and authentication
-identity. Settings can renew a token for the same workspace without dropping
-pending changes. Android backups are disabled to avoid restoring encrypted
-authentication without its device-bound key.
+Connect using a Prompt Waypoint user token. The server field is prefilled with
+`https://promptwaypoint.com` and can be changed for a self-hosted deployment.
+Native builds store Prompt Waypoint authentication in iOS Keychain or Android
+Keystore (AES-GCM encrypted private preferences). Browser previews keep the
+token in memory only. Cached snapshots and pending changes are scoped to the
+server and authentication identity. Settings can renew a token for the same
+workspace without dropping pending changes. Android backups are disabled to
+avoid restoring encrypted authentication without its device-bound key.
 
 Home shows running/waiting/ready tasks, devices and New Task. Projects groups
 repositories by computer. A repository presents touch-friendly sections and
@@ -32,11 +33,11 @@ Ready and server-side Queue. Run clearly indicates the unavailable device.
 
 ## Offline and command delivery
 
-`src/model/controller.ts` owns one SSE subscription and one timed fallback per
-app. The app also refreshes on reconnect and when returning to the foreground.
-`src/model/store.ts` persists the last snapshot, new drafts and ordered
-mutations in one local storage record. Saving a draft does not wait for the
-network.
+`src/model/controller.ts` owns one revision polling subscription and one timed
+fallback per app. The app also refreshes on reconnect and when returning to the
+foreground. `src/model/store.ts` persists the last snapshot, new drafts and
+ordered mutations in one local storage record. Saving a draft does not wait for
+the network.
 
 Create/edit requests and actions receive client-generated IDs before dispatch. A
 lost response keeps the same payload and idempotency key for retry. Double
@@ -56,12 +57,12 @@ device and profile; notification links do not execute commands.
 ## Native plugin and push
 
 `src-tauri/companion-native` is the isolated Swift/Kotlin plugin for secure
-Companion authentication and APNs/FCM. No third-party push plugin is needed.
-Notifications supported by the server are completed, failed, waiting input and
-resumed. Settings requests permission explicitly, obtains a native token, and
-registers it through `ServerClient.registerPush`. Token rotation uses the same
-registration ID and a new persisted idempotency key. Registration retries after
-reconnect.
+Prompt Waypoint authentication and APNs/FCM. No third-party push plugin is
+needed. Notifications supported by the server are completed, failed, waiting
+input and resumed. Settings requests permission explicitly, obtains a native
+token, and registers it through `ServerClient.registerPush`. Token rotation uses
+the same registration ID and a new persisted idempotency key. Registration
+retries after reconnect.
 
 Notification taps are persisted natively until the web UI drains them, including
 cold starts. Foreground events refresh the snapshot. Links resolve to
@@ -82,18 +83,19 @@ deno task tauri ios dev
 deno task tauri ios build --debug --target aarch64-sim --no-sign --ci
 ```
 
-The iOS application is **PM.ai**, bundle ID `com.caretsix.aiproductmanager`,
-minimum iOS 15.0, marketing version 0.1.0 and build number 1. Canonical settings
-live in `src-tauri/tauri.ios.conf.json` and its `src-tauri/ios/project.yml.hbs`
-template. Regeneration preserves Debug APNs `development` and Release APNs
-`production`, automatic signing, the `pmai` scheme and the export-compliance
-declaration. Internal Rust/Xcode target names remain `mobile` / `mobile_iOS`.
+The iOS application is **Prompt Waypoint**, bundle ID
+`com.caretsix.aiproductmanager`, minimum iOS 15.0, marketing version 0.1.0 and
+build number 1. Canonical settings live in `src-tauri/tauri.ios.conf.json` and
+its `src-tauri/ios/project.yml.hbs` template. Regeneration preserves Debug APNs
+`development` and Release APNs `production`, automatic signing, the `pmai`
+scheme and the export-compliance declaration. Internal Rust/Xcode target names
+remain `mobile` / `mobile_iOS`.
 
 See [TESTFLIGHT.md](TESTFLIGHT.md) for release validation, required Apple steps,
 version increments, APNs `.p8` server configuration and current blockers. The
-new PM.ai icon is sourced from `assets/branding/app-icon.png`. The unsigned
-Release archive and LaunchScreen compile successfully. No signed TestFlight
-archive or live push delivery has been validated.
+new Prompt Waypoint icon is sourced from `assets/branding/app-icon.png`. The
+unsigned Release archive and LaunchScreen compile successfully. No signed
+TestFlight archive or live push delivery has been validated.
 
 ### Android
 
@@ -110,8 +112,9 @@ Create a Firebase Android app for `com.martinvich.mobile`. Put its
 `google-services.json` in `src-tauri/gen/android/app/` (gitignored). Gradle
 applies Google Services only when the file is present; builds without it remain
 usable, and notification registration reports that Firebase is not configured.
-Configure matching FCM credentials on the Companion server. The plugin manifest
-registers its `FirebaseMessagingService` and Android 13 notification permission.
+Configure matching FCM credentials on the Prompt Waypoint server. The plugin
+manifest registers its `FirebaseMessagingService` and Android 13 notification
+permission.
 
 Debug APK: `src-tauri/gen/android/app/build/outputs/apk/universal/debug/`.
 Release builds require your signing configuration. Do not commit signing keys or

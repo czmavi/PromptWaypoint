@@ -18,7 +18,7 @@ export function serverMcpContext(
           ? error.message
           : error instanceof PmaiMcpError
           ? error.message
-          : "PM.ai service unavailable. Retry with the same mutationId.",
+          : "Prompt Waypoint service unavailable. Retry with the same mutationId.",
       );
     }
   }

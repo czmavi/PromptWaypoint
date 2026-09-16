@@ -17,7 +17,7 @@ import { FakeCodingAgentProvider } from "../../agent/src/providers/fake.ts";
 import { actionResult, creation } from "../../../packages/mcp/schemas.ts";
 const databaseURL = Deno.env.get("PMAI_TEST_DATABASE_URL");
 async function until(check: () => Promise<boolean> | boolean) {
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < 400; i++) {
     if (await check()) return;
     await new Promise((r) => setTimeout(r, 20));
   }
@@ -355,9 +355,10 @@ Deno.test({
       });
       sync = new ServerSync(
         agent,
-        "wss://test.invalid",
+        "https://test.invalid",
         device.token,
-        () => new WebSocket(`${base.replace("http:", "ws:")}/ws/agent`),
+        (input, init) =>
+          fetch(new URL(new URL(String(input)).pathname, base), init),
       );
       sync.start();
       await until(() => fake.prompts === 1);

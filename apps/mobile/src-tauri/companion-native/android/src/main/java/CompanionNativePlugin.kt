@@ -66,12 +66,12 @@ class CompanionNativePlugin(private val activity:Activity):Plugin(activity){
   val bytes=Base64.decode(encoded,Base64.NO_WRAP);require(bytes.size>12)
   val cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,key(),GCMParameterSpec(128,bytes.copyOfRange(0,12)))
   invoke.resolve(JSObject().put("value",String(cipher.doFinal(bytes.copyOfRange(12,bytes.size)),Charsets.UTF_8)))
- }catch(e:Exception){invoke.reject("Companion secure storage unavailable")}}
+ }catch(e:Exception){invoke.reject("Prompt Waypoint secure storage unavailable")}}
  @Command fun writeAuth(invoke:Invoke){try{
   val value=invoke.parseArgs(AuthArgs::class.java).value
   val cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key())
   val sealed=Base64.encodeToString(cipher.iv+cipher.doFinal(value.toByteArray(Charsets.UTF_8)),Base64.NO_WRAP)
   check(prefs.edit().putString("sealed",sealed).commit());invoke.resolve()
- }catch(e:Exception){invoke.reject("Companion secure storage write failed")}}
- @Command fun clearAuth(invoke:Invoke){if(prefs.edit().clear().commit())invoke.resolve()else invoke.reject("Could not clear Companion auth")}
+ }catch(e:Exception){invoke.reject("Prompt Waypoint secure storage write failed")}}
+ @Command fun clearAuth(invoke:Invoke){if(prefs.edit().clear().commit())invoke.resolve()else invoke.reject("Could not clear Prompt Waypoint auth")}
 }

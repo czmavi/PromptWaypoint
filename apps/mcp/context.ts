@@ -15,7 +15,7 @@ export function clientMcpContext(
   cwd: string,
   transport: typeof fetch = fetch,
 ): PmaiMcpContext {
-  // Do not follow redirects with Companion or Local Agent credentials.
+  // Do not follow redirects with Prompt Waypoint or Local Agent credentials.
   const boundedFetch: typeof fetch = (input, init) =>
     transport(input, {
       ...init,
@@ -37,8 +37,8 @@ export function clientMcpContext(
       throw new PmaiMcpError(
         error instanceof ServerApiError && error.status < 500
           ? error.detail ??
-            `PM.ai API returned ${error.status}. Check access and task state.`
-          : "PM.ai server unavailable. Retry with the same mutationId.",
+            `Prompt Waypoint API returned ${error.status}. Check access and task state.`
+          : "Prompt Waypoint server unavailable. Retry with the same mutationId.",
       );
     }
   }

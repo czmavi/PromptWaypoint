@@ -13,4 +13,4 @@ for (const entry of manifest.images as { filename: string }[]) {
     new URL(entry.filename, catalog),
   );
 }
-console.log("PM.ai iOS icons synchronized.");
+console.log("Prompt Waypoint iOS icons synchronized.");

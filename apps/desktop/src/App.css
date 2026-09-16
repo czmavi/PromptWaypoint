@@ -1,15 +1,17 @@
 @import "tailwindcss";
 :root {
   font-family: Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  color: #292d29;
+  color: #1e293b;
   background: #fff;
   font-synthesis: none;
   font-size: 14px;
   --bg: #fff;
-  --subtle: #f7f8f5;
-  --line: #e7e9e3;
-  --muted: #81877e;
-  --accent: #355d40;
+  --subtle: #f8faff;
+  --line: #dbe4f0;
+  --muted: #64748b;
+  --accent: #2563eb;
+  --accent-text: #1d4ed8;
+  --accent-soft: #eff6ff;
 }
 * {
   box-sizing: border-box;
@@ -42,7 +44,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #729c72;
+  outline: 2px solid #3b82f6;
   outline-offset: 3px;
 }
 input,
@@ -117,15 +119,16 @@ p {
   letter-spacing: -.4px;
 }
 .brand-mark {
-  background: #355d40;
+  background: #2563eb;
   color: white;
   width: 28px;
   height: 28px;
   border-radius: 8px;
   text-align: center;
   line-height: 27px;
-  font-size: 25px;
-  font-family: Georgia;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 .edition {
   font-size: 8px;
@@ -160,15 +163,15 @@ nav button {
 }
 nav button > span {
   width: 17px;
-  color: #778171;
+  color: #64748b;
   font-size: 17px;
 }
 nav small {
   margin-left: auto;
 }
 .active {
-  background: #e7ede2!important;
-  color: #355d40!important;
+  background: var(--accent-soft)!important;
+  color: var(--accent-text)!important;
 }
 .sidebar-label {
   display: flex;
@@ -188,14 +191,14 @@ nav small {
   font-size: 12px;
 }
 .project-icon {
-  border: 1px solid #dce1d7;
+  border: 1px solid #dbe4f0;
   border-radius: 4px;
   width: 20px;
   height: 20px;
   text-align: center;
   font-size: 10px;
   line-height: 18px;
-  color: #71826c;
+  color: #64748b;
 }
 .sidebar-bottom {
   margin-top: auto;
@@ -210,11 +213,11 @@ nav small {
   font-size: 11px;
 }
 .connection {
-  color: #92958d;
+  color: #64748b;
   padding-left: 7px;
 }
 .connected {
-  color: #56794e;
+  color: var(--accent-text);
 }
 .workspace {
   flex: 1;
@@ -235,7 +238,7 @@ nav small {
   font-size: 11px;
 }
 .slash {
-  color: #c5c8c0;
+  color: #cbd5e1;
   margin: 0 13px;
 }
 .page,
@@ -263,7 +266,7 @@ nav small {
   white-space: nowrap;
 }
 .primary:hover {
-  background: #456e4c;
+  background: #1d4ed8;
 }
 .overview {
   display: flex;
@@ -310,10 +313,10 @@ nav small {
   height: 5px;
   border-radius: 50%;
   display: inline-block;
-  background: #a7aba4;
+  background: #94a3b8;
 }
 .online {
-  background: #679059;
+  background: #3b82f6;
 }
 .list-header {
   display: flex;
@@ -350,12 +353,12 @@ nav small {
 .task-check {
   width: 17px;
   height: 17px;
-  border: 1px solid #d7dcd2;
+  border: 1px solid #dbe4f0;
   border-radius: 5px;
   flex-shrink: 0;
   line-height: 14px;
   text-align: center;
-  color: #587b4c;
+  color: var(--accent-text);
 }
 .task-card-content {
   display: flex;
@@ -388,14 +391,14 @@ nav small {
   gap: 6px;
   font-size: 10px;
   white-space: nowrap;
-  color: #788071;
+  color: #64748b;
 }
 .status-running,
 .status-dispatching {
-  color: #517744;
+  color: var(--accent-text);
 }
 .status-running .status-dot {
-  background: #719a60;
+  background: #3b82f6;
 }
 .status-waiting_input,
 .status-waiting_quota {
@@ -416,7 +419,7 @@ nav small {
 }
 .empty > span {
   font-size: 35px;
-  color: #a3b19a;
+  color: #94a3b8;
 }
 .empty p {
   color: var(--muted);
@@ -640,7 +643,7 @@ dd {
   justify-content: space-between;
 }
 .toast {
-  color: #587b4c;
+  color: var(--accent-text);
   font-size: 11px;
   padding: 12px 36px;
   background: var(--subtle);
@@ -671,22 +674,26 @@ dd {
   clip: rect(0,0,0,0);
 }
 [data-appearance=dark] {
-  --bg: #20241f;
-  --subtle: #272d25;
-  --line: #394035;
-  --muted: #9ba592;
-  --accent: #52744b;
-  color: #e1e6dc;
+  --bg: #0f172a;
+  --subtle: #172033;
+  --line: #334155;
+  --muted: #a4b2c8;
+  --accent: #2563eb;
+  --accent-text: #93c5fd;
+  --accent-soft: #1e3a5f;
+  color: #e2e8f0;
   background: var(--bg);
 }
 @media (prefers-color-scheme:dark) {
   [data-appearance=system] {
-    --bg: #20241f;
-    --subtle: #272d25;
-    --line: #394035;
-    --muted: #9ba592;
-    --accent: #52744b;
-    color: #e1e6dc;
+    --bg: #0f172a;
+    --subtle: #172033;
+    --line: #334155;
+    --muted: #a4b2c8;
+    --accent: #2563eb;
+    --accent-text: #93c5fd;
+    --accent-soft: #1e3a5f;
+    color: #e2e8f0;
     background: var(--bg);
   }
 }

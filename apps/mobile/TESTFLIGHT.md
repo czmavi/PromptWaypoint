@@ -1,10 +1,11 @@
-# PM.ai — first Internal TestFlight release
+# Prompt Waypoint — first Internal TestFlight release
 
 ## Repository preparation
 
-**Identity:** PM.ai, `com.caretsix.aiproductmanager`, iOS 15.0+, marketing
-version **0.1.0**, build **1**. This document does not certify a signed archive
-or a successful upload. No Apple account operations were performed.
+**Identity:** Prompt Waypoint, `com.caretsix.aiproductmanager`, iOS 15.0+,
+marketing version **0.1.0**, build **1**. This document does not certify a
+signed archive or a successful upload. No Apple account operations were
+performed.
 
 Canonical iOS settings are in `src-tauri/tauri.ios.conf.json`. Tauri merges this
 over `tauri.conf.json`; the base identifier is retained for the existing Android
@@ -64,12 +65,12 @@ deno task tauri ios build
 `ios:check` validates regenerated plist values, both signing configurations, the
 `pmai` scheme, launch-screen reference, and all 18 icon PNG entries and
 dimensions, including the 1024×1024 App Store icon. The marketing PNG has no
-alpha channel. The template artwork has been replaced by a generated PM.ai mark:
-stacked task cards with a forward/run symbol, in forest green, ivory and sage.
-The original master and generation prompt are in `assets/branding/`; canonical
-iOS sizes are in `src-tauri/icons/ios/`. The iOS before-build hook runs
-`ios:icons:sync` to restore them into the generated asset catalog. Run that task
-after `tauri ios init` when validating without building.
+alpha channel. The template artwork has been replaced by a generated Prompt
+Waypoint mark: stacked task cards with a forward/run symbol, in royal blue,
+white and sky blue. The current master and generation prompt are in
+`assets/branding/`; canonical iOS sizes are in `src-tauri/icons/ios/`. The iOS
+before-build hook runs `ios:icons:sync` to restore them into the generated asset
+catalog. Run that task after `tauri ios init` when validating without building.
 
 The Swift plugin retains APNs permission/registration, token delivery,
 foreground notifications, notification taps and durable pending taps for cold
@@ -113,11 +114,11 @@ is rejected. Debug APNs needs a separate server environment with
 After installing the iOS platform, the unsigned Release archive and LaunchScreen
 compilation succeeded (2026-09-09). The archive is
 `src-tauri/gen/apple/build/mobile_iOS.xcarchive`. Its application plist confirms
-PM.ai, `com.caretsix.aiproductmanager`, version 0.1.0/build 1, iOS 15.0, `pmai`
-deep links and the encryption declaration. This archive was built with
-`--no-sign`: it is not a validated distribution archive and was not uploaded.
-Signing, production APNs delivery and the final Organizer upload still require
-the manual steps below. To repeat the launch-screen check:
+Prompt Waypoint, `com.caretsix.aiproductmanager`, version 0.1.0/build 1, iOS
+15.0, `pmai` deep links and the encryption declaration. This archive was built
+with `--no-sign`: it is not a validated distribution archive and was not
+uploaded. Signing, production APNs delivery and the final Organizer upload still
+require the manual steps below. To repeat the launch-screen check:
 
 ```sh
 xcrun ibtool --compile /tmp/PMai-LaunchScreen.storyboardc \
@@ -144,7 +145,7 @@ Files changed for this release preparation (paths relative to the repository):
 | `apps/mobile/deno.json`                                                          | Add ios:check, ios:release and ios:export tasks.                         |
 | `apps/mobile/scripts/ios-check.ts`                                               | Validate canonical/generated settings and PNG dimensions.                |
 | `apps/mobile/src-tauri/tauri.conf.json`                                          | Raise base iOS deployment target to 15.0.                                |
-| `apps/mobile/src-tauri/tauri.ios.conf.json`                                      | Set PM.ai, version/build and canonical iOS template.                     |
+| `apps/mobile/src-tauri/tauri.ios.conf.json`                                      | Set Prompt Waypoint, version/build and canonical iOS template.           |
 | `apps/mobile/src-tauri/ios/project.yml.hbs`                                      | Preserve signing, APNs environments, plist and version settings on init. |
 | `apps/mobile/src-tauri/gen/apple/project.yml`                                    | Regenerated XcodeGen configuration.                                      |
 | `apps/mobile/src-tauri/gen/apple/mobile.xcodeproj/project.pbxproj`               | Regenerated Debug/Release build settings.                                |
@@ -174,7 +175,7 @@ Files changed for this release preparation (paths relative to the repository):
    Notifications. For regeneration, supply the same actual team through
    `APPLE_DEVELOPMENT_TEAM` in your shell or a local Tauri configuration. Allow
    Xcode to create the appropriate signing/provisioning assets.
-4. In App Store Connect, create the iOS app **PM.ai** with bundle ID
+4. In App Store Connect, create the iOS app **Prompt Waypoint** with bundle ID
    `com.caretsix.aiproductmanager`, selecting your own unique SKU and primary
    language. Complete required agreements and app information. Review the
    encryption declaration against the actual archive and app behavior.
@@ -185,17 +186,18 @@ Files changed for this release preparation (paths relative to the repository):
 
    ```sh
    # Set PMAI_ARCHIVE to the actual .xcarchive path from Organizer.
-   plutil -p "$PMAI_ARCHIVE/Products/Applications/PM.ai.app/Info.plist"
+   plutil -p "$PMAI_ARCHIVE/Products/Applications/Prompt Waypoint.app/Info.plist"
    codesign -d --entitlements :- \
-     "$PMAI_ARCHIVE/Products/Applications/PM.ai.app"
+     "$PMAI_ARCHIVE/Products/Applications/Prompt Waypoint.app"
    ```
 
-   Verify identifier `com.caretsix.aiproductmanager`, display name `PM.ai`,
-   version `0.1.0`, build `1`, minimum iOS 15.0, the `pmai` scheme and
-   `ITSAppUsesNonExemptEncryption=false`. In the **signed** entitlements verify
-   `aps-environment=production` and the expected application/team identity. The
-   distribution export must not enable `get-task-allow`. Also inspect the
-   exported app if Organizer re-signs it during distribution.
+   Verify identifier `com.caretsix.aiproductmanager`, display name
+   `Prompt Waypoint`, version `0.1.0`, build `1`, minimum iOS 15.0, the `pmai`
+   scheme and `ITSAppUsesNonExemptEncryption=false`. In the **signed**
+   entitlements verify `aps-environment=production` and the expected
+   application/team identity. The distribution export must not enable
+   `get-task-allow`. Also inspect the exported app if Organizer re-signs it
+   during distribution.
 6. In Organizer choose **Distribute App → App Store Connect → Upload**. Resolve
    signing/validation issues, upload and wait for App Store Connect processing.
    No upload or signed archive has been performed by Codex.

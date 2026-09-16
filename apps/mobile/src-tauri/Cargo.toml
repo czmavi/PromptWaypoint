@@ -1,7 +1,7 @@
 [package]
 name = "mobile"
 version = "0.1.0"
-description = "Companion mobile control"
+description = "Prompt Waypoint mobile control"
 authors = ["you"]
 edition = "2021"
 

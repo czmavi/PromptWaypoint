@@ -80,3 +80,5 @@ export type {
   TaskStatus,
   User,
 } from "./server.ts";
+
+export { DEFAULT_SERVER_URL, PRODUCT_NAME } from "./branding.ts";

@@ -6,7 +6,7 @@ use tauri::{
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 fn entry(name: &str) -> Result<keyring::Entry, String> {
     if !["agent", "server"].contains(&name) {
-        return Err("Unknown Companion credential".into());
+        return Err("Unknown Prompt Waypoint credential".into());
     }
     keyring::Entry::new("com.pmai.companion", name).map_err(|e| e.to_string())
 }
@@ -67,13 +67,13 @@ pub fn run() {
         .setup(|app| {
             app.global_shortcut()
                 .register("CommandOrControl+Shift+Space")?;
-            let open = MenuItem::with_id(app, "open", "Open Companion", true, None::<&str>)?;
+            let open = MenuItem::with_id(app, "open", "Open Prompt Waypoint", true, None::<&str>)?;
             let capture = MenuItem::with_id(app, "capture", "Quick Capture", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit Companion", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "Quit Prompt Waypoint", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open, &capture, &quit])?;
             let mut tray = TrayIconBuilder::new()
                 .menu(&menu)
-                .tooltip("Companion")
+                .tooltip("Prompt Waypoint")
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "open" => {
                         let _ = show(app, "main");
@@ -103,5 +103,5 @@ pub fn run() {
             show_capture
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Companion");
+        .expect("error while running Prompt Waypoint");
 }

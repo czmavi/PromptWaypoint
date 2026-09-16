@@ -40,7 +40,7 @@ if (import.meta.main) {
     );
   } catch {
     console.error(
-      "PM.ai MCP smoke failed. Check server URL, Companion token and server availability.",
+      "Prompt Waypoint MCP smoke failed. Check server URL, Prompt Waypoint token and server availability.",
     );
     Deno.exitCode = 1;
   } finally {

@@ -1,3 +1,4 @@
+import { DEFAULT_SERVER_URL } from "../../packages/core/main.ts";
 import { Agent } from "./src/agent.ts";
 import { localApi } from "./src/api.ts";
 import { Store } from "./src/store.ts";
@@ -51,13 +52,13 @@ if (import.meta.main) {
     hostname: "127.0.0.1",
     port: Number(Deno.env.get("PMAI_AGENT_PORT") ?? 7431),
   }, localApi(agent, token));
-  const url = Deno.env.get("PMAI_SERVER_URL");
+  const url = Deno.env.get("PMAI_SERVER_URL") || DEFAULT_SERVER_URL;
   const serverToken = Deno.env.get("PMAI_DEVICE_TOKEN");
   const sync = url && serverToken
     ? new ServerSync(agent, url, serverToken)
     : undefined;
-  sync?.start();
   await agent.start(Number(Deno.env.get("PMAI_RECONCILE_MS") ?? 60000));
+  sync?.start();
   let closing = false;
   const close = async () => {
     if (closing) return;

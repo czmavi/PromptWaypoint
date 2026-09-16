@@ -7,11 +7,11 @@ if (import.meta.main) {
   try {
     const context = clientMcpContext(readConfig(), Deno.cwd());
     serveStdio(() => createPmaiMcpServer(context), {
-      onerror: () => console.error("PM.ai MCP transport error."),
+      onerror: () => console.error("Prompt Waypoint MCP transport error."),
     });
   } catch {
     console.error(
-      "PM.ai MCP startup failed. Check PMAI_SERVER_URL, PMAI_CLIENT_TOKEN and optional Local Agent configuration.",
+      "Prompt Waypoint MCP startup failed. Check PMAI_SERVER_URL, PMAI_CLIENT_TOKEN and optional Local Agent configuration.",
     );
     Deno.exit(1);
   }

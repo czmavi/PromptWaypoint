@@ -1,3 +1,4 @@
+import { DEFAULT_SERVER_URL } from "../../../packages/core/main.ts";
 import type { Context } from "fresh";
 import type { State } from "../utils.ts";
 import {
@@ -6,9 +7,10 @@ import {
   ProductPreview,
 } from "../components/ProductPreview.tsx";
 
-export const title = "PM.ai — Product management for AI coding agents";
+export const title =
+  "Prompt Waypoint — Product management for AI coding agents";
 const description =
-  "Turn ideas into focused coding tasks and orchestrate Codex and Claude across your own machines with PM.ai.";
+  "Turn ideas into focused coding tasks and orchestrate Codex and Claude across your own machines with Prompt Waypoint.";
 
 // Only deployment configuration can supply the public origin; never trust Host.
 export function publicURL(value: string | undefined): string | undefined {
@@ -78,15 +80,15 @@ const steps = [
 ];
 const questions = [
   [
-    "Does PM.ai replace Codex or Claude?",
-    "No. PM.ai coordinates the coding agents you already use. The agents do the implementation; PM.ai keeps the work organized.",
+    "Does Prompt Waypoint replace Codex or Claude?",
+    "No. Prompt Waypoint coordinates the coding agents you already use. The agents do the implementation; Prompt Waypoint keeps the work organized.",
   ],
   [
     "Does the code run in the cloud?",
-    "Coding-agent processes run on your configured machine against local repositories. PM.ai syncs task and prompt content, execution updates and metadata through its server. Your coding provider may process code according to its own settings and policies.",
+    "Coding-agent processes run on your configured machine against local repositories. Prompt Waypoint syncs task and prompt content, execution updates and metadata through its server. Your coding provider may process code according to its own settings and policies.",
   ],
   [
-    "Does PM.ai need GitHub access?",
+    "Does Prompt Waypoint need GitHub access?",
     "No. The current core workflow uses local repositories and prompt-based tasks. It does not require GitHub or Git integration.",
   ],
   [
@@ -95,10 +97,10 @@ const questions = [
   ],
   [
     "Can AI create tasks automatically?",
-    "Compatible MCP clients can create backlog items from conversations using your PM.ai account token. Creating a task and authorizing its execution are separate decisions. Clients that require OAuth account linking need a future authentication extension.",
+    "Compatible MCP clients can create backlog items from conversations using your Prompt Waypoint account token. Creating a task and authorizing its execution are separate decisions. Clients that require OAuth account linking need a future authentication extension.",
   ],
   [
-    "Is PM.ai an IDE?",
+    "Is Prompt Waypoint an IDE?",
     "No. It is a task and orchestration layer. Keep using your preferred editor and development environment.",
   ],
   ["Is it free?", "Pricing has not been announced yet."],
@@ -113,9 +115,9 @@ export function LandingPage({ canonical }: { canonical?: string }) {
         <title>{title}</title>
         <meta name="description" content={description} />
         <meta name="robots" content="index, follow" />
-        <meta name="theme-color" content="#173d33" />
+        <meta name="theme-color" content="#2563eb" />
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="PM.ai" />
+        <meta property="og:site_name" content="Prompt Waypoint" />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta name="twitter:card" content="summary" />
@@ -133,13 +135,13 @@ export function LandingPage({ canonical }: { canonical?: string }) {
             <meta property="og:image:height" content="1024" />
             <meta
               property="og:image:alt"
-              content="PM.ai app icon: stacked task cards on a forest green background"
+              content="Prompt Waypoint app icon: stacked task cards on a royal blue background"
             />
             <meta
               name="twitter:image"
               content={`${canonical}marketing/icon.png`}
             />
-            <meta name="twitter:image:alt" content="PM.ai app icon" />
+            <meta name="twitter:image:alt" content="Prompt Waypoint app icon" />
           </>
         )}
         <link rel="icon" type="image/png" href="/marketing/brand.png" />
@@ -148,10 +150,10 @@ export function LandingPage({ canonical }: { canonical?: string }) {
       <body>
         <a class="skip-link" href="#main">Skip to content</a>
         <header class="site-header shell">
-          <a class="brand" href="#" aria-label="PM.ai home">
+          <a class="brand" href="#" aria-label="Prompt Waypoint home">
             <img src="/marketing/brand.png" alt="" width="32" height="32" />
             <span class="wordmark">
-              PM<span>.ai</span>
+              Prompt <span>Waypoint</span>
             </span>
           </a>
           <nav aria-label="Main navigation">
@@ -176,8 +178,8 @@ export function LandingPage({ canonical }: { canonical?: string }) {
               </h1>
               <p class="hero-description">
                 A home for your next idea. A queue for what comes
-                next.<br />PM.ai turns focused prompts into tasks for Codex and
-                Claude—on your own machines.
+                next.<br />Prompt Waypoint turns focused prompts into tasks for
+                Codex and Claude—on your own machines.
               </p>
               <div class="hero-actions">
                 <a class="primary-link" href="#how-it-works">
@@ -268,8 +270,8 @@ export function LandingPage({ canonical }: { canonical?: string }) {
                   <em>your machines.</em>
                 </h2>
                 <p class="large-copy">
-                  PM.ai coordinates the work. Your development environment stays
-                  yours.
+                  Prompt Waypoint coordinates the work. Your development
+                  environment stays yours.
                 </p>
                 <p>
                   Repositories and coding-agent credentials stay on your
@@ -302,7 +304,7 @@ export function LandingPage({ canonical }: { canonical?: string }) {
                 </p>
               </div>
               <div class="comparison-pmai">
-                <span class="eyebrow">THE PM.ai WORKFLOW</span>
+                <span class="eyebrow">THE Prompt Waypoint WORKFLOW</span>
                 <p>
                   Idea <span>→</span> Focused prompt <span>→</span> Coding agent
                   {" "}
@@ -343,7 +345,7 @@ export function LandingPage({ canonical }: { canonical?: string }) {
                   <span class="chat-person">YOU</span>
                   <p>
                     Split this architecture into four implementation tasks and
-                    add them to PM.ai.
+                    add them to Prompt Waypoint.
                   </p>
                 </div>
                 <div class="chat-message ai-message">
@@ -422,7 +424,7 @@ export function LandingPage({ canonical }: { canonical?: string }) {
         </main>
         <footer class="shell">
           <a class="wordmark" href="#">
-            PM<span>.ai</span>
+            Prompt <span>Waypoint</span>
           </a>
           <p>AI-native task orchestration for coding agents.</p>
           <a href="#main">Back to top ↑</a>
@@ -434,7 +436,11 @@ export function LandingPage({ canonical }: { canonical?: string }) {
 
 export function marketingPage(ctx: Context<State>) {
   return ctx.render(
-    <LandingPage canonical={publicURL(Deno.env.get("PMAI_PUBLIC_URL"))} />,
+    <LandingPage
+      canonical={publicURL(
+        Deno.env.get("PMAI_PUBLIC_URL") || DEFAULT_SERVER_URL,
+      )}
+    />,
     {
       headers: {
         "Content-Security-Policy":

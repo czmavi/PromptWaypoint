@@ -25,5 +25,8 @@
     "mcp:test": "deno test --allow-env --allow-net --allow-read --allow-run packages/mcp apps/mcp apps/server/tests/mcp_test.ts",
     "mcp:smoke": "deno run --allow-env --allow-net apps/mcp/smoke.ts"
   },
-  "nodeModulesDir": "auto"
+  "nodeModulesDir": "auto",
+  "unstable": [
+    "cron"
+  ]
 }

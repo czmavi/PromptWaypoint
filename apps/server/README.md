@@ -1,11 +1,10 @@
-# PM.ai control-plane server
+# Prompt Waypoint control-plane server
 
 Deno Fresh 2 API server with PostgreSQL persistence. The desktop/mobile apps
 remain separate; this server serves a public read-only promotional page.
-Business logic lives under `src/`; `routes/api` and `routes/ws` register thin
-programmatic Fresh routes. Fresh uses its official Vite plugin for development
-and production builds. Business services and transport handlers are shared by
-both modes.
+Business logic lives under `src/`; `routes/api` registers thin programmatic
+Fresh routes. Fresh uses its official Vite plugin for development and production
+builds. Business services and transport handlers are shared by both modes.
 
 ## Public website
 
@@ -13,36 +12,37 @@ both modes.
 account data, and does not query PostgreSQL or call business services. The
 server's existing runtime initialization still requires PostgreSQL.
 
-| Route          | Purpose                                                                   |
-| -------------- | ------------------------------------------------------------------------- |
-| `/`            | Public marketing page                                                     |
-| `/marketing/*` | Public stylesheet and existing PM.ai brand icon                           |
-| `/api/*`       | Existing authenticated PM.ai API (bootstrap login retains its own policy) |
-| `/ws/agent`    | Existing authenticated agent WebSocket handshake                          |
-| `/api/events`  | Existing authenticated SSE stream                                         |
-| `/mcp`         | Authenticated MCP Streamable HTTP endpoint                                |
+| Route                                   | Purpose                                                                             |
+| --------------------------------------- | ----------------------------------------------------------------------------------- |
+| `/`                                     | Public marketing page                                                               |
+| `/marketing/*`                          | Public stylesheet and existing Prompt Waypoint brand icon                           |
+| `/api/*`                                | Existing authenticated Prompt Waypoint API (bootstrap login retains its own policy) |
+| `/api/agent/connect`, `/api/agent/sync` | Device-authenticated HTTPS synchronization                                          |
+| `/api/revision`                         | Authenticated revision for client polling                                           |
+| `/mcp`                                  | Authenticated MCP Streamable HTTP endpoint                                          |
 
-MCP integration is available for compatible clients with a configured Companion
-Bearer token. The optional AI Task Router remains planned. The public page never
-reads account data.
+MCP integration is available for compatible clients with a configured Prompt
+Waypoint Bearer token. The optional AI Task Router remains planned. The public
+page never reads account data.
 
 Optional `PMAI_PUBLIC_URL` sets the public HTTP(S) origin used for canonical,
 Open Graph URL/image and Twitter image metadata, e.g. your actual deployment
 origin. Paths, queries and fragments are removed; invalid or credential-bearing
-URLs are ignored. Without it these absolute URLs are omitted. The social image
-reuses the existing 1024px PM.ai iOS icon; the header/favicon use an 80px copy
-to keep page downloads small. No production hostname is assumed.
+URLs are ignored. The default public origin is `https://promptwaypoint.com`. The
+social image reuses the existing 1024px Prompt Waypoint iOS icon; the
+header/favicon use an 80px copy to keep page downloads small. The public origin
+can be overridden for a self-hosted deployment.
 
 The page has no islands, forms, tracking, account UI or production JavaScript.
 FAQ disclosures and anchor navigation work natively, with responsive CSS and
 reduced-motion support. A restrictive page-only CSP blocks scripts and network
 connections; Fresh/Vite's development-only live-reload scripts may therefore be
-blocked on this route. Refresh the page manually during development. API, SSE
-and WebSocket responses retain their existing security behavior. Public static
-file handling is restricted to `/marketing/*` to avoid shadowing backend routes.
-The server uses Preact’s `react-jsx` transform so Vite development SSR receives
-ordinary VNodes rather than already-precompiled templates. Production SSR and
-development rendering are both covered by the tooling integration test.
+blocked on this route. Refresh the page manually during development. API
+responses retain their existing security behavior. Public static file handling
+is restricted to `/marketing/*` to avoid shadowing backend routes. The server
+uses Preact’s `react-jsx` transform so Vite development SSR receives ordinary
+VNodes rather than already-precompiled templates. Production SSR and development
+rendering are both covered by the tooling integration test.
 
 ## Start
 
@@ -81,28 +81,55 @@ is an authenticated, user-scoped JSON summary.
 | `PMAI_FCM_PROJECT`     | Optional FCM project ID                                            |
 | `PMAI_FCM_TOKEN_FILE`  | File containing a current Google OAuth access token with FCM scope |
 
-For remote operation, terminate HTTPS/WSS at a reverse proxy and proxy
-`/ws/agent` with WebSocket upgrades and `/api/events` with SSE buffering
-disabled. Do not expose plain HTTP authentication over an untrusted network.
-Normal native Tauri origins are allowed; browser development origins must be
-explicitly configured.
+For remote operation, use HTTPS (provided by Deno Deploy, or terminate TLS at a
+reverse proxy). All cloud synchronization uses short HTTP requests. Do not
+expose plain HTTP authentication over an untrusted network. Normal native Tauri
+origins are allowed; browser development origins must be explicitly configured.
 
 `main.ts` exports the Fresh `app`; `app.ts` constructs the same routes for
 integration tests. `src/runtime.ts` owns database connections, migrations,
-scheduler, push processing and shutdown. Vite reloads close the preceding
-runtime before creating another, so background workers and agent connections are
-not duplicated. The native config loader lets Deno resolve the workspace's JSR
-imports without Vite bundling its own configuration.
+request-scoped scheduling, push processing and shutdown. Vite reloads close the
+preceding runtime before creating another, so database resources are closed
+before replacement. The native config loader lets Deno resolve the workspace's
+JSR imports without Vite bundling its own configuration.
 
-In development only, Vite proxies `/ws/agent` to an ephemeral loopback Deno
-listener because `Deno.upgradeWebSocket` cannot upgrade Vite's Node requests.
-Agents still connect to the same public port and use the same authentication.
-Production handles HTTP, SSE and WebSockets directly in Deno, without this
-proxy. `serve.ts` serves the generated `_fresh/server.js` while preserving
+`serve.ts` serves the generated `_fresh/server.js` while preserving
 `PMAI_SERVER_HOST` and `PORT`. SQL migrations are copied into the server build;
 deploy the whole `_fresh/` directory alongside `serve.ts` and the Deno workspace
-configuration/lockfile. The build is intended for a persistent Deno server
-process, including its existing background workers.
+configuration/lockfile. Production registers `companion-maintenance` with
+`Deno.cron` every minute, before starting HTTP. The workspace enables Deno's
+`cron` feature. Vite development does not register the production cron.
+
+## Deno Deploy
+
+Configure from the repository root (the workspace includes shared packages):
+
+- Install: `deno install`
+- Build: `deno task --cwd apps/server build`
+- Runtime entrypoint: `apps/server/serve.ts` (or the `apps/server` start task)
+- Database: attach PostgreSQL 15+ or set `DATABASE_URL` in the target
+  environment.
+- Authentication: set a random `PMAI_DEV_AUTH_SECRET` of at least 32 characters.
+- Optional: set `PMAI_PUBLIC_URL` to the deployment's HTTPS origin.
+
+Deploy the server, then restart updated agents and update desktop/mobile
+clients. Migration `003_http_sync` is additive and runs at startup. Agents
+should set `PMAI_SERVER_URL=https://promptwaypoint.com`; the updated agent also
+translates an existing `wss://<host>/ws/agent` setting to the HTTPS endpoints.
+Old agent binaries and old SSE clients must be updated: `/ws/agent` and
+`/api/events` are removed. Avoid serving mixed old/new server versions during
+this protocol upgrade.
+
+Verify `/health`, pairing, and an agent's online state. In Deploy's Cron tab,
+verify that `companion-maintenance` is registered. Cron retries persisted push
+jobs even without active clients; provider configuration is needed to actually
+send notifications. Background scheduling of agent tasks does not depend on
+cron. No live Deno Deploy account or paid provider execution is exercised by
+tests.
+
+See [Deploy runtime](https://docs.deno.com/deploy/reference/runtime/),
+[PostgreSQL setup](https://docs.deno.com/deploy/reference/databases/), and
+[Cron registration](https://docs.deno.com/deploy/reference/cron/).
 
 ## MCP integration
 
@@ -121,15 +148,15 @@ requiring no schema migration. Existing create/edit/action endpoints remain
 compatible.
 
 MCP imposes 120 requests/minute and 10 creation calls/minute per user in the
-current single-process deployment, with a bounded in-memory limiter and the
-existing 1 MB request body limit. Tool handlers never query PostgreSQL directly.
-MCP-owned resources are closed with the existing control-plane lifecycle,
-including Vite reloads. Persistent MCP subscriptions are not enabled.
+each server instance, with a bounded in-memory limiter and the existing 1 MB
+request body limit. Tool handlers never query PostgreSQL directly. MCP-owned
+resources are closed with the existing control-plane lifecycle, including Vite
+reloads. Persistent MCP subscriptions are not enabled.
 
 See [MCP setup and tools](../mcp/README.md) for all tool/resource schemas,
 mutationId retry semantics, Claude Code configuration, remote smoke tests,
-Companion authentication and ChatGPT OAuth limitations. No MCP-specific secrets
-or new server auth environment variables are required.
+Prompt Waypoint authentication and ChatGPT OAuth limitations. No MCP-specific
+secrets or new server auth environment variables are required.
 
 ## Authentication and device pairing
 
@@ -145,20 +172,19 @@ secret manager; there is no default password or public user-selection endpoint.
    API.
 3. POST `/api/devices` with `{id, name, platform}` using the client token. This
    creates a device and returns its dedicated device token once.
-4. Configure the agent's `PMAI_SERVER_URL=wss://<host>/ws/agent` and
+4. Configure the agent's `PMAI_SERVER_URL=https://promptwaypoint.com` and
    `PMAI_DEVICE_TOKEN` using that response. Repository/profile metadata comes
    from the agent's authenticated registration, not from the mobile client.
 5. POST `/api/devices/:id/token` rotates a token; DELETE on the same path
-   revokes it and disconnects its live agent. A lost pairing response can be
-   recovered by rotating the token. These secret-issuing responses are
+   revokes it and invalidates its active sync session. A lost pairing response
+   can be recovered by rotating the token. These secret-issuing responses are
    deliberately not stored in the mutation journal.
 
 Only SHA-256 hashes of high-entropy client/device tokens are persisted. Client
 credentials expire after 30 days; device credentials after 365 days. Revocation
-is checked on each HTTP request/agent frame and during heartbeat maintenance.
-Logout revokes the current client token. Authenticated SSE connections
-periodically recheck credentials; logout also closes that user's live
-subscriptions.
+is checked on every HTTP request, and again inside the fenced agent transaction.
+Logout revokes the current client token. Subsequent revision checks reject the
+revoked token and the client subscription stops.
 
 The dev bootstrap creates one dev user; the persistence and authorization layers
 support multiple isolated users. A production identity provider can replace the
@@ -174,9 +200,8 @@ run exclusively inside the Local Agent.
 ## Typed API
 
 `ServerClient` is exported from `packages/api-client`. It shares domain types
-and runtime request schemas with the server. Desktop/mobile application
-implementation is outside this server change; the client is ready for those apps
-to consume.
+and runtime request schemas with the server. Desktop and mobile share its
+revision polling and snapshot cache.
 
 | Method / route                                                                                          | Behavior                                                                    |
 | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -192,8 +217,8 @@ to consume.
 | GET / POST `/api/push-registrations`                                                                    | List registration metadata / register `{id, platform, token}`               |
 | DELETE `/api/push-registrations/:id`                                                                    | Remove a push registration                                                  |
 | POST `/api/auth/logout`                                                                                 | Revoke the current client token                                             |
-| GET `/api/events`                                                                                       | Authenticated SSE invalidation stream                                       |
-| GET `/ws/agent`                                                                                         | Agent WebSocket upgrade                                                     |
+| GET `/api/revision`                                                                                     | Authenticated user-scoped revision, including presence/observation expiry   |
+| POST `/api/agent/connect`, `/api/agent/sync`                                                            | Device token required; fenced registration and sync batches                 |
 
 Every Task/dependency/action/push mutation requires an `Idempotency-Key`.
 Generate one when the user submits an action and keep it for retries. Reusing a
@@ -246,9 +271,10 @@ server restart.
 - Creating a Task for an offline device is supported. `ready` never dispatches
   by itself. Run explicitly persists a command even while the target is offline.
 - Queue records explicit intent without immediately creating an execution. The
-  scheduler dispatches only when the device is connected, dependencies
-  completed, a provider profile exists and the repository has no unfinished
-  execution or freshly observed active external session.
+  scheduler dispatches only when the device has a fresh database heartbeat and
+  has finished replaying its outbox, dependencies completed, a provider profile
+  exists and the repository has no unfinished execution or freshly observed
+  active external session.
 - Agent ACK changes only command delivery state. It never means that a Task is
   running/completed. Normalized execution events update actual task state.
 - A failed/uncertain command result does not fabricate successful execution. A
@@ -260,38 +286,56 @@ server restart.
 - Local-only task execution events do not create new cloud Tasks. External
   session metadata is cached without creating backlog entries.
 
-## Realtime and reconnect
+## HTTPS synchronization and revisions
 
-The wire format matches the existing Local Agent:
+The local agent owns the polling loop; the server has no background scheduling
+timer and no process-local presence or subscription registry. Any HTTP request
+can reach any server instance sharing the same PostgreSQL database.
 
-```text
-agent → hello {version:1, token, device}
-server → welcome
-agent → registration {device, repositories, profiles}
-server → command {command}             # original commandId/executionId
-agent → ack {commandId}                # after agent journal commit
-agent → commandResult {result}
-agent → event {event}
-server → eventAck {eventId}            # only after PostgreSQL commit
-```
+1. `POST /api/agent/connect` uses a device Bearer token and
+   `{sessionId, generation, device, repositories, profiles}`. The agent persists
+   an increasing generation per server origin in its SQLite metadata. The server
+   records the current generation, session ID and token hash. Handshake retries
+   with the same identity are idempotent; older generations and sessions are
+   rejected even across instances. Rotating the device token resets this fence,
+   allowing recovery after restoring an old agent database.
+2. `POST /api/agent/sync` sends `{sessionId, events, hasMore, acknowledged}`.
+   Under the user's transaction lock it rechecks auth/session ownership, renews
+   presence, applies deduplicated events, records command ACKs, schedules queued
+   work and returns
+   `{sessionId, eventIds, acknowledged, commands, pollAfterMs}`. ACKs do not
+   mean the execution completed. Event IDs are acknowledged only after the whole
+   transaction commits. Invalid batches roll back completely.
+3. The agent removes only acknowledged events from its durable outbox. Batches
+   contain at most 100 events/ACKs and responses at most 20 commands. While
+   `hasMore` is true the device is excluded from scheduling and command
+   delivery. The normal poll interval is four seconds; new local events trigger
+   an earlier request. Failures use exponential backoff up to a minute. Provider
+   dispatch runs independently so a slow provider cannot block heartbeats.
+4. Unfinished commands can be redelivered after 30 seconds with their original
+   immutable IDs. The local journal prevents a second execution. Lost responses,
+   instance restarts and concurrent sync calls preserve the same durable work.
+   An agent receiving 401/403/409 stops syncing until pairing/restart is
+   resolved.
 
-Pending, delivered and acknowledged commands are eligible for redelivery; the
-agent journal prevents replayed execution. A new connection supersedes the old
-one for that device. Heartbeats and maintenance expire silent sockets after 45
-seconds; online status is transient and resets naturally on server restart.
+A device is online while its authenticated heartbeat is less than 45 seconds
+old. Presence expiry, token expiry and session freshness use database time.
+Every domain change increments a user revision in its transaction. Identical
+upserts and heartbeat timestamps do not force a full snapshot download.
+`GET /api/revision` also incorporates presence and session expiry, so UI state
+becomes stale without requiring a background process to update the database.
 
-Clients consume SSE `changed` events and refresh one shared snapshot.
-`ServerClient` includes authenticated SSE parsing, reconnect backoff and
-cancellation. Each connection starts with a refresh event, so reconnect repairs
-missed notifications. The 5-second maintenance invalidation also makes stale
-cache transitions visible. Session responses include `observedAt` and `stale`;
-stale or offline-device sessions report `state: "unknown"` instead of claiming
-the agent is still running.
+Desktop/mobile check revisions every four seconds. `ServerClient.snapshot()`
+reuses the last snapshot if its revision is unchanged. Returning to the
+foreground refreshes immediately. Session observations older than 120 seconds,
+or belonging to offline devices, report `unknown`; online status never proves
+work is running.
 
-This MVP is intended for one active server process. Socket ownership, online
-status and SSE fan-out are in memory; database state survives process restart.
-Multi-node routing/fan-out is intentionally not introduced. Mutation/event
-journals and history do not yet have retention compaction or list pagination.
+The scheduler runs during sync and awaited client mutations. Existing user
+transaction locks and task execution constraints serialize competing instances.
+Push retries run through production cron using the durable database queue. MCP
+rate limits remain per instance, not a global quota. Mutation/event journals and
+history do not yet have retention compaction or list pagination.
 
 ## Push notifications
 
@@ -363,11 +407,13 @@ sets it.
 
 The tooling integration test builds without database credentials and exercises
 production startup on a fresh database, Vite development, authenticated HTTP,
-SSE and a real native WebSocket handshake.
+revision checks and real agent HTTPS synchronization.
 
 Tests cover offline create/queue, concurrent Run, duplicate mutations,
 dependency cycles, command transaction rollback, restart persistence, same
 names/IDs across devices, stale sessions, tenant isolation, revoked tokens,
-event validation, retained history, push envelopes, SSE cleanup and a real
-Fresh-to-Local-Agent WebSocket session with reconnect. Provider execution uses
-the Fake provider.
+event validation, retained history, push envelopes, revision cancellation and a
+real Fresh-to-Local-Agent HTTP session with retries. Cross-instance tests cover
+shared presence, queue progression, stale-session fencing, lost-response
+redelivery, revocation and atomic batch rollback. Provider execution uses the
+Fake provider.

@@ -1,6 +1,6 @@
 {
   "identifier": "default",
-  "description": "Companion mobile authentication and navigation",
+  "description": "Prompt Waypoint mobile authentication and navigation",
   "windows": [
     "main"
   ],

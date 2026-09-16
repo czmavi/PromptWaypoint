@@ -5,7 +5,7 @@ import type { State } from "./utils.ts";
 import { ControlPlane } from "./src/services/control_plane.ts";
 import { ApiError } from "./src/services/errors.ts";
 import { apiRoutes } from "./routes/api/routes.ts";
-import { realtimeRoutes } from "./routes/ws/routes.ts";
+
 export function createApp(
   service: ControlPlane,
   origins = [
@@ -51,7 +51,9 @@ export function createApp(
         }
         ctx.state.principal = await service.auth.authenticate(
           authorization.slice(7),
-          "client",
+          path === "/api/agent/connect" || path === "/api/agent/sync"
+            ? "device"
+            : "client",
         );
       }
       const response = await ctx.next();
@@ -103,7 +105,6 @@ export function createApp(
     });
   });
   apiRoutes(app, service);
-  realtimeRoutes(app, service);
   mcpRoutes(app, service);
   return app;
 }

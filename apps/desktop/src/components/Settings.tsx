@@ -94,7 +94,7 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
         <h2>Provider Profiles</h2>
         <p>
           Use local config directories already authenticated with the provider.
-          Companion manages metadata only.
+          Prompt Waypoint manages metadata only.
         </p>
         {c.profiles.map((p) => (
           <div class="profile-row">
@@ -203,7 +203,7 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
             />
           </label>
           <label>
-            Companion Agent token<input
+            Prompt Waypoint Agent token<input
               type="password"
               name="agent"
               autoComplete="off"
@@ -218,7 +218,7 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
             />
           </label>
           <label>
-            Companion Server token<input
+            Prompt Waypoint Server token<input
               type="password"
               name="server"
               autoComplete="off"
@@ -227,7 +227,7 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
           </label>
           <small>
             {native
-              ? "Companion tokens are stored in your operating system credential store."
+              ? "Prompt Waypoint tokens are stored in your operating system credential store."
               : "Browser preview keeps tokens in memory only. Use the desktop app for persistent secure authentication."}
           </small>
           <button type="submit" class="primary">Save connections</button>
@@ -269,7 +269,7 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
                 setAuto(enabled);
               });
             }}
-          />Launch Companion at login
+          />Launch Prompt Waypoint at login
         </label>
         <label>
           Reconciliation fallback (seconds)<input
@@ -316,7 +316,7 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
         </label>
         <p>
           Quick Capture: ⌘ / Ctrl + Shift + Space. Closing the main window keeps
-          Companion in the menu bar.
+          Prompt Waypoint in the menu bar.
         </p>
       </section>
     </div>

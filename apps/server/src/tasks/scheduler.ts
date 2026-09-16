@@ -1,15 +1,19 @@
 import type { Task } from "../../../../packages/core/main.ts";
-import type { Database } from "../db/database.ts";
+import type { Database, Transaction } from "../db/database.ts";
 import { activeStates, Tasks } from "./tasks.ts";
 export class Scheduler {
   constructor(
     private db: Database,
     private tasks: Tasks,
-    private online: (deviceId: string) => boolean,
   ) {}
-  tick(userId: string) {
-    return this.db.transaction(async (tx) => {
+  tick(userId: string, transaction?: Transaction) {
+    const apply = async (tx: Transaction) => {
       await tx.lock(userId);
+      const devices = await tx.query<{ id: string }>(
+        "SELECT id FROM devices WHERE user_id=$1 AND last_seen_at>now()-interval '45 seconds' AND sync_ready AND sync_session_id IS NOT NULL AND EXISTS (SELECT 1 FROM auth_tokens a WHERE a.hash=devices.sync_token_hash AND a.revoked_at IS NULL AND a.expires_at>now())",
+        [userId],
+      );
+      const online = new Set(devices.map((d) => d.id));
       const rows = await tx.query<{ body: Task; device_id: string }>(
         "SELECT t.body,r.device_id FROM tasks t JOIN repositories r ON r.id=t.repository_id WHERE t.user_id=$1 AND t.deleted_at IS NULL AND t.body->>'status'='queued' ORDER BY (t.body->>'priority')::numeric DESC,(t.body->>'position')::numeric,t.id",
         [userId],
@@ -17,7 +21,7 @@ export class Scheduler {
       let dispatched = false;
       for (const row of rows) {
         if (
-          !this.online(row.device_id) ||
+          !online.has(row.device_id) ||
           await this.tasks.blocked(tx, row.body.id)
         ) continue;
         const busy = await tx.query(
@@ -40,6 +44,7 @@ export class Scheduler {
         dispatched = true;
       }
       return dispatched;
-    });
+    };
+    return transaction ? apply(transaction) : this.db.transaction(apply);
   }
 }

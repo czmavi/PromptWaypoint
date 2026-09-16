@@ -71,3 +71,4 @@ export function parseCommand(value: unknown): Command {
 export * from "./server.ts";
 export * from "./observations.ts";
 export * from "./batch.ts";
+export * from "./sync.ts";

@@ -19,6 +19,7 @@ export class ServerApiError extends Error {
   }
 }
 export class ServerClient {
+  private cached?: { revision: string; snapshot: ServerSnapshot };
   constructor(
     private baseUrl: string,
     private token: string,
@@ -29,9 +30,11 @@ export class ServerClient {
     method = "GET",
     body?: unknown,
     key?: string,
+    signal?: AbortSignal,
   ): Promise<T> {
     const response = await this.transport(new URL(path, this.baseUrl), {
       method,
+      signal,
       headers: {
         Authorization: `Bearer ${this.token}`,
         "Content-Type": "application/json",
@@ -57,8 +60,25 @@ export class ServerClient {
   logout(): Promise<{ ok: boolean }> {
     return this.request("/api/auth/logout", "POST");
   }
-  snapshot(): Promise<ServerSnapshot> {
-    return this.request("/api/snapshot");
+  async snapshot(): Promise<ServerSnapshot> {
+    const { revision } = await this.revision();
+    if (this.cached?.revision === revision) return this.cached.snapshot;
+    const snapshot = await this.request<ServerSnapshot>("/api/snapshot");
+    this.cached = { revision, snapshot };
+    return snapshot;
+  }
+  async revision(signal?: AbortSignal): Promise<{ revision: string }> {
+    const response = await this.request<{ revision: string }>(
+      "/api/revision",
+      "GET",
+      undefined,
+      undefined,
+      signal,
+    );
+    if (typeof response.revision !== "string" || !response.revision) {
+      throw new Error("Invalid server revision");
+    }
+    return response;
   }
   registerDevice(
     device: Pick<ServerDevice, "id" | "name" | "platform">,
@@ -146,40 +166,31 @@ export class ServerClient {
       key,
     );
   }
-  // fetch-based SSE supports Authorization on desktop/mobile; each change triggers one shared snapshot refresh.
-  async subscribe(onChange: () => void, signal: AbortSignal): Promise<void> {
+  // Each check can reach a different server instance. Revision is durable in PG.
+  async subscribe(
+    onChange: () => void | Promise<void>,
+    signal: AbortSignal,
+  ): Promise<void> {
+    let previous: string | undefined;
     let attempt = 0;
     while (!signal.aborted) {
+      let delay = 4000;
       try {
-        const response = await this.transport(
-          new URL("/api/events", this.baseUrl),
-          { headers: { Authorization: `Bearer ${this.token}` }, signal },
+        const { revision } = await this.revision(
+          AbortSignal.any([signal, AbortSignal.timeout(15000)]),
         );
-        if (response.status === 401) throw new Error("Authentication expired");
-        if (!response.ok || !response.body) {
-          throw new Error("Realtime unavailable");
+        if (signal.aborted) return;
+        if (previous !== revision) {
+          await onChange();
+          previous = revision;
         }
         attempt = 0;
-        let buffer = "";
-        for await (
-          const chunk of response.body.pipeThrough(new TextDecoderStream())
-        ) {
-          buffer += chunk;
-          if (buffer.length > 1000000) {
-            throw new Error("Invalid realtime frame");
-          }
-          let index: number;
-          while ((index = buffer.indexOf("\n\n")) >= 0) {
-            const frame = buffer.slice(0, index);
-            buffer = buffer.slice(index + 2);
-            if (frame.startsWith("event:")) onChange();
-          }
-        }
       } catch (error) {
         if (signal.aborted) return;
         if (
-          error instanceof Error && error.message === "Authentication expired"
+          error instanceof ServerApiError && [401, 403].includes(error.status)
         ) throw error;
+        delay = Math.min(30000, 1000 * 2 ** Math.min(attempt++, 5));
       }
       if (signal.aborted) return;
       await new Promise<void>((resolve) => {
@@ -188,10 +199,7 @@ export class ServerClient {
           signal.removeEventListener("abort", finish);
           resolve();
         };
-        const timer = setTimeout(
-          finish,
-          Math.min(30000, 1000 * 2 ** Math.min(attempt++, 5)),
-        );
+        const timer = setTimeout(finish, delay);
         signal.addEventListener("abort", finish, { once: true });
       });
     }

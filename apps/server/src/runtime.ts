@@ -12,6 +12,7 @@ import {
 interface Runtime {
   app: ReturnType<typeof createApp>;
   close(): Promise<void>;
+  maintenance(): Promise<void>;
 }
 // Vite re-evaluates server modules. Serialize cleanup across module generations.
 const key = Symbol.for("pmai.server.runtime");
@@ -80,7 +81,6 @@ export async function createRuntime(): Promise<Runtime> {
     "https://tauri.localhost",
     ...extraOrigins,
   ]);
-  service.start();
   let closing: Promise<void> | undefined;
   const signal = () => {
     void close().then(() => Deno.exit(0));
@@ -98,7 +98,7 @@ export async function createRuntime(): Promise<Runtime> {
   }
   Deno.addSignalListener("SIGINT", signal);
   Deno.addSignalListener("SIGTERM", signal);
-  const runtime = { app, close };
+  const runtime = { app, close, maintenance: () => service.maintenance() };
   registry[key] = runtime;
   return runtime;
 }

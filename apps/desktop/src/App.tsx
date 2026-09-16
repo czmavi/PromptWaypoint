@@ -54,10 +54,15 @@ export default function App(
           void controller.refresh();
         };
         globalThis.addEventListener("storage", storage);
+        const visible = () => {
+          if (document.visibilityState === "visible") void controller.refresh();
+        };
+        document.addEventListener("visibilitychange", visible);
         cleanup = () => {
           controller.stop();
           controller.listeners.delete(update);
           globalThis.removeEventListener("storage", storage);
+          document.removeEventListener("visibilitychange", visible);
         };
       },
     ).catch((e) => setError(String(e)));
@@ -81,7 +86,9 @@ export default function App(
     globalThis.addEventListener("keydown", key);
     return () => globalThis.removeEventListener("keydown", key);
   }, []);
-  if (!c) return <div class="loading">{error || "Opening Companion…"}</div>;
+  if (!c) {
+    return <div class="loading">{error || "Opening Prompt Waypoint…"}</div>;
+  }
   const execute = async (fn: () => Promise<unknown>) => {
     try {
       setError("");
@@ -100,7 +107,8 @@ export default function App(
     return (
       <main class="quick-capture">
         <div class="brand">
-          <span class="brand-mark">p</span>Companion{" "}
+          <span class="brand-mark" aria-hidden="true">PW</span>Prompt Waypoint
+          {" "}
           <small>Quick Capture</small>
         </div>
         <Editor
@@ -156,7 +164,8 @@ export default function App(
     <div class="shell">
       <aside class="sidebar">
         <div class="brand">
-          <span class="brand-mark">p</span>Companion<span class="edition">
+          <span class="brand-mark" aria-hidden="true">PW</span>Prompt
+          Waypoint<span class="edition">
             LOCAL
           </span>
         </div>
@@ -441,8 +450,8 @@ export default function App(
                   </small>
                 </h2>
                 <p class="muted">
-                  Sessions started outside Companion. They stay separate from
-                  your tasks.
+                  Sessions started outside Prompt Waypoint. They stay separate
+                  from your tasks.
                 </p>
                 {c.sessions.filter((s) => s.origin === "external").map((s) => (
                   <button

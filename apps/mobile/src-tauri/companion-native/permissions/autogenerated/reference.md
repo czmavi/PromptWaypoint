@@ -1,6 +1,6 @@
 ## Default Permission
 
-Companion authentication storage only.
+Prompt Waypoint authentication storage only.
 
 #### This default permission set includes the following:
 

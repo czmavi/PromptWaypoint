@@ -41,11 +41,11 @@ export function ProductPreview() {
   return (
     <figure
       class="product-preview"
-      aria-label="Illustrative PM.ai task board, with sample tasks"
+      aria-label="Illustrative Prompt Waypoint task board, with sample tasks"
     >
       <div class="preview-toolbar">
         <span class="wordmark">
-          PM<span>.ai</span>
+          Prompt <span>Waypoint</span>
         </span>
         <span class="toolbar-path">
           Workspace / <strong>Datovka</strong>
@@ -108,7 +108,7 @@ export function PhonePreview() {
       </div>
       <div class="phone-title">
         <span class="wordmark">
-          PM<span>.ai</span>
+          Prompt <span>Waypoint</span>
         </span>
         <span class="avatar">M</span>
       </div>
@@ -153,7 +153,7 @@ export function ArchitecturePreview() {
   return (
     <figure
       class="architecture"
-      aria-label="Mobile and desktop connect to the PM.ai server. The server relays commands to the local agent, which runs Codex or Claude against local repositories."
+      aria-label="Mobile and desktop connect to the Prompt Waypoint server. The server relays commands to the local agent, which runs Codex or Claude against local repositories."
     >
       <div class="architecture-clients">
         <div>Mobile app</div>
@@ -163,7 +163,7 @@ export function ArchitecturePreview() {
         ↕ <span>Task content & status</span>
       </div>
       <div class="server-node">
-        <strong>PM.ai Server</strong>
+        <strong>Prompt Waypoint Server</strong>
         <span>Sync · command relay · push</span>
       </div>
       <div class="connector">
@@ -171,7 +171,7 @@ export function ArchitecturePreview() {
       </div>
       <div class="local-boundary">
         <span class="eyebrow">ON EACH OF YOUR MACHINES</span>
-        <div class="agent-node">Local PM.ai Agent</div>
+        <div class="agent-node">Local Prompt Waypoint Agent</div>
         <div class="connector" aria-hidden="true">↓</div>
         <div class="providers">
           <span>Codex</span>

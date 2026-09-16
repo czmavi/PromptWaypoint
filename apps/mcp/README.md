@@ -1,9 +1,10 @@
-# PM.ai MCP
+# Prompt Waypoint MCP
 
-One shared `createPmaiMcpServer(context)` factory exposes PM.ai tasks to MCP
-hosts. `apps/mcp/main.ts` serves stdio; Fresh serves Streamable HTTP at `/mcp`.
-Both use the existing domain services and mutation journal. No MCP tool accesses
-PostgreSQL, source files, shells or coding-provider credentials directly.
+One shared `createPmaiMcpServer(context)` factory exposes Prompt Waypoint tasks
+to MCP hosts. `apps/mcp/main.ts` serves stdio; Fresh serves Streamable HTTP at
+`/mcp`. Both use the existing domain services and mutation journal. No MCP tool
+accesses PostgreSQL, source files, shells or coding-provider credentials
+directly.
 
 The pinned official `@modelcontextprotocol/server` and `client` packages are
 **2.0.0**, with Zod **4.4.3**. The serving entries are `serveStdio` and
@@ -16,15 +17,16 @@ There is no handwritten MCP JSON-RPC dispatcher or standalone SSE endpoint.
 From the monorepo root, after `deno install`:
 
 ```sh
-# Provide PMAI_SERVER_URL and PMAI_CLIENT_TOKEN in your environment.
+# Provide PMAI_CLIENT_TOKEN. The server defaults to https://promptwaypoint.com.
 deno task mcp
 ```
 
-`PMAI_SERVER_URL` is the server origin, such as `http://127.0.0.1:8000` locally.
-It is not the `/mcp` URL. Remote origins require HTTPS. The token is an existing
-PM.ai **Companion client token**, not a Local Agent/device/provider token. The
-stdio process calls the normal HTTP API, so the server must be reachable; it
-does not need to use the remote MCP endpoint. No local Task database is made.
+`PMAI_SERVER_URL` defaults to `https://promptwaypoint.com`. Override it with
+another server origin, such as `http://127.0.0.1:8000` locally. It is not the
+`/mcp` URL. Remote origins require HTTPS. The token is an existing **Prompt
+Waypoint client token**, not a Local Agent/device/provider token. The stdio
+process calls the normal HTTP API, so the server must be reachable; it does not
+need to use the remote MCP endpoint. No local Task database is made.
 
 The process writes only MCP protocol messages to stdout. Startup and transport
 errors go to stderr with tokens and connection details omitted. API calls have a
@@ -42,9 +44,9 @@ claude mcp add --transport stdio --scope user pmai -- deno run \
 claude mcp get pmai
 ```
 
-Launch Claude Code with `PMAI_SERVER_URL` and `PMAI_CLIENT_TOKEN` already set
-through your shell or secret manager. Do not put actual tokens in committed
-configuration or command history.
+Launch Claude Code with `PMAI_CLIENT_TOKEN` already set; `PMAI_SERVER_URL` is
+optional through your shell or secret manager. Do not put actual tokens in
+committed configuration or command history.
 
 Alternatively, a `.mcp.json` configuration can reference host environment
 values:
@@ -64,7 +66,7 @@ values:
         "/absolute/path/PM.ai/apps/mcp/main.ts"
       ],
       "env": {
-        "PMAI_SERVER_URL": "${PMAI_SERVER_URL}",
+        "PMAI_SERVER_URL": "https://promptwaypoint.com",
         "PMAI_CLIENT_TOKEN": "${PMAI_CLIENT_TOKEN}"
       }
     }
@@ -95,11 +97,11 @@ authority. Remote HTTP clients have no cwd context.
 ## Remote Streamable HTTP
 
 The endpoint is `<your-server-origin>/mcp`, for example
-`https://pmai.example.com/mcp` (documentation placeholder, not a deployment).
-Every request except CORS preflight requires:
+`https://promptwaypoint.com/mcp` (the default production endpoint). Every
+request except CORS preflight requires:
 
 ```http
-Authorization: Bearer <PM.ai Companion client token>
+Authorization: Bearer <Prompt Waypoint client token>
 ```
 
 Tokens are authenticated through the existing `AuthProvider` on each request;
@@ -118,7 +120,7 @@ retain their existing semantics.
 The endpoint is stateless. Legacy session GET/DELETE requests return 405 through
 the SDK. Persistent MCP subscriptions are not advertised or supported; read
 resources again to refresh them. Existing `/api/events` SSE remains available to
-native PM.ai clients.
+native Prompt Waypoint clients.
 
 Limits are in-process and per user: **120 HTTP requests/minute**, including
 protocol discovery, and **10 task-creation calls/minute**. The HTTP limiter
@@ -134,8 +136,8 @@ The standard transport can be used by hosts that accept a configured Bearer
 header. The OpenAI Responses API supports remote Streamable HTTP servers; see
 [the official MCP guide](https://developers.openai.com/api/docs/guides/tools-connectors-mcp).
 Configure authorization in your host and keep execution tools behind the host's
-approval policy. PM.ai still enforces its own authorization regardless of host
-confirmation behavior.
+approval policy. Prompt Waypoint still enforces its own authorization regardless
+of host confirmation behavior.
 
 **ChatGPT OAuth account linking is not implemented in this phase.** OpenAI's
 [authenticated plugin integration](https://developers.openai.com/apps-sdk/build/auth)

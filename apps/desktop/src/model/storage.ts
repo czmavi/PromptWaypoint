@@ -1,4 +1,7 @@
-import type { Task } from "../../../../packages/core/main.ts";
+import {
+  DEFAULT_SERVER_URL,
+  type Task,
+} from "../../../../packages/core/main.ts";
 import type { Command } from "../../../../packages/protocol/main.ts";
 export interface DesktopTask extends Task {
   dependencies: string[];
@@ -15,7 +18,7 @@ export interface Preferences {
 }
 export const defaults: Preferences = {
   agentUrl: "http://127.0.0.1:7431",
-  serverUrl: "",
+  serverUrl: DEFAULT_SERVER_URL,
   notifications: true,
   refreshSeconds: 60,
   appearance: "system",

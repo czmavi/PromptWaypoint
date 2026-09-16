@@ -23,7 +23,12 @@ export async function body(req: Request): Promise<unknown> {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > 1000000) {
+      if (
+        size >
+          (new URL(req.url).pathname.startsWith("/api/agent/")
+            ? 4000000
+            : 1000000)
+      ) {
         await reader.cancel();
         throw new ApiError(413, "Body too large");
       }
@@ -42,6 +47,28 @@ export async function body(req: Request): Promise<unknown> {
 }
 const key = (req: Request) => req.headers.get("idempotency-key") ?? "";
 export function apiRoutes(app: App<State>, service: ControlPlane) {
+  app.post(
+    "/api/agent/connect",
+    async (ctx) =>
+      Response.json(
+        await service.sync.connect(ctx.state.principal!, await body(ctx.req)),
+      ),
+  );
+  app.post(
+    "/api/agent/sync",
+    async (ctx) =>
+      Response.json(
+        await service.sync.exchange(ctx.state.principal!, await body(ctx.req)),
+      ),
+  );
+  app.get(
+    "/api/revision",
+    async (ctx) =>
+      Response.json(
+        await service.snapshots.revision(ctx.state.principal!.userId),
+      ),
+  );
+
   app.post("/api/auth/dev-login", async (ctx) => {
     const v = strict(await body(ctx.req), ["secret"]);
     return Response.json(await service.login(text(v.secret, "secret", 256)));
@@ -51,7 +78,6 @@ export function apiRoutes(app: App<State>, service: ControlPlane) {
       "UPDATE auth_tokens SET revoked_at=now() WHERE hash=$1",
       [ctx.state.principal!.tokenHash],
     );
-    service.clients.closeUser(ctx.state.principal!.userId);
     return Response.json({ ok: true });
   });
   app.get(

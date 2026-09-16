@@ -1,3 +1,4 @@
+import { DEFAULT_SERVER_URL } from "../../packages/core/main.ts";
 export interface McpConfig {
   serverUrl: string;
   clientToken: string;
@@ -7,10 +8,10 @@ export interface McpConfig {
 export function readConfig(
   env: (name: string) => string | undefined = (name) => Deno.env.get(name),
 ): McpConfig {
-  const server = env("PMAI_SERVER_URL");
+  const server = env("PMAI_SERVER_URL") || DEFAULT_SERVER_URL;
   const clientToken = env("PMAI_CLIENT_TOKEN");
-  if (!server || !clientToken) {
-    throw new Error("PMAI_SERVER_URL and PMAI_CLIENT_TOKEN are required.");
+  if (!clientToken) {
+    throw new Error("PMAI_CLIENT_TOKEN is required.");
   }
   function url(value: string, localOnly: boolean) {
     let parsed: URL;

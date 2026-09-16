@@ -1,7 +1,7 @@
 [package]
 name = "desktop"
 version = "0.1.0"
-description = "Companion local agent control"
+description = "Prompt Waypoint local agent control"
 authors = ["you"]
 edition = "2021"
 

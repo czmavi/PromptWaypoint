@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import { PRODUCT_NAME } from "../../../packages/core/main.ts";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import {
   LocalAgentClient,
@@ -26,7 +27,7 @@ export async function notify(title: string) {
   if (!native) return;
   const n = await import("@tauri-apps/plugin-notification");
   if (await n.isPermissionGranted()) {
-    n.sendNotification({ title: "Companion", body: title });
+    n.sendNotification({ title: PRODUCT_NAME, body: title });
   }
 }
 export async function makeController() {

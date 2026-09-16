@@ -55,7 +55,7 @@ export function mcpRoutes(
       if (!(error instanceof ApiError) || error.status !== 401) throw error;
       return Response.json({ error: "Unauthorized" }, {
         status: 401,
-        headers: { "WWW-Authenticate": 'Bearer realm="PM.ai MCP"' },
+        headers: { "WWW-Authenticate": 'Bearer realm="Prompt Waypoint MCP"' },
       });
     }
     if (!requests.take(principal.userId)) {

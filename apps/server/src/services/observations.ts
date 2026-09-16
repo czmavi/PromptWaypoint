@@ -25,14 +25,15 @@ export class Observations {
   constructor(
     private db: Database,
     private catalog: Catalog,
-    private changed: (userId: string) => void,
+    private changed: (userId: string) => Promise<void>,
   ) {}
   async registration(
     userId: string,
     deviceId: string,
     value: Record<string, unknown>,
+    transaction?: Transaction,
   ) {
-    await this.db.transaction(async (tx) => {
+    const apply = async (tx: Transaction) => {
       await tx.lock(userId);
       const device = strict(value.device, ["id", "name", "platform"]);
       if (device.id !== deviceId) throw new ApiError(403, "Device mismatch");
@@ -46,8 +47,12 @@ export class Observations {
       for (const r of value.repositories) {
         await this.catalog.repository(tx, userId, deviceId, r);
       }
-    });
-    this.changed(userId);
+    };
+    if (transaction) await apply(transaction);
+    else {
+      await this.db.transaction(apply);
+      await this.changed(userId);
+    }
   }
   async execution(
     tx: Transaction,
@@ -225,6 +230,7 @@ export class Observations {
     userId: string,
     deviceId: string,
     input: unknown,
+    transaction?: Transaction,
   ): Promise<string> {
     const v = strict(input, ["id", "deviceId", "type", "at", "data"]);
     const eventId = id(v.id);
@@ -232,7 +238,7 @@ export class Observations {
     if (v.deviceId !== deviceId || Date.parse(at) > Date.now() + 300000) {
       throw new ApiError(400, "Invalid event identity/time");
     }
-    await this.db.transaction(async (tx) => {
+    const apply = async (tx: Transaction) => {
       await tx.lock(userId);
       const inserted = await tx.query(
         "INSERT INTO agent_events(device_id,id) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING id",
@@ -319,8 +325,12 @@ export class Observations {
         default:
           throw new Error("Unsupported event");
       }
-    });
-    this.changed(userId);
+    };
+    if (transaction) await apply(transaction);
+    else {
+      await this.db.transaction(apply);
+      await this.changed(userId);
+    }
     return eventId;
   }
   async commandResult(userId: string, deviceId: string, value: unknown) {
@@ -336,6 +346,6 @@ export class Observations {
         `command:${id(result.commandId)}`,
       );
     });
-    this.changed(userId);
+    await this.changed(userId);
   }
 }

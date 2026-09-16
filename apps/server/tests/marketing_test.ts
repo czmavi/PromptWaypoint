@@ -26,6 +26,13 @@ Deno.test("marketing SSR is public, static and independent of private services",
     const html = await response.text();
     assert(response.status === 200, "public homepage");
     assert(html.includes(`<title>${title}</title>`), "SEO title");
+    assert(title.startsWith("Prompt Waypoint"), "product name");
+    if (!Deno.env.get("PMAI_PUBLIC_URL")) {
+      assert(
+        html.includes('rel="canonical" href="https://promptwaypoint.com/"'),
+        "default production origin",
+      );
+    }
     assert(html.includes("Turn ideas into work"), "headline");
     assert(
       (html.match(/<html\b/g) ?? []).length === 1,

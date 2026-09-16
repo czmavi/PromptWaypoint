@@ -9,8 +9,7 @@ import {
 } from "../../../../packages/protocol/main.ts";
 import { type AuthProvider, issue, TokenAuth } from "../auth/auth.ts";
 import { Database } from "../db/database.ts";
-import { ClientEvents } from "../realtime/clients.ts";
-import { AgentConnections } from "../realtime/agents.ts";
+import { AgentSync } from "../realtime/sync.ts";
 import { Catalog } from "./catalog.ts";
 import { Mutations } from "./mutations.ts";
 import { Observations } from "./observations.ts";
@@ -24,19 +23,14 @@ import { createTaskBatch } from "../tasks/batch.ts";
 export class ControlPlane {
   auth: AuthProvider;
   private tokenAuth: TokenAuth;
-  clients = new ClientEvents();
   catalog = new Catalog();
   tasks = new Tasks();
   mutations: Mutations;
   observations: Observations;
   snapshots: Snapshots;
-  agents: AgentConnections;
+  sync: AgentSync;
   scheduler: Scheduler;
   push: PushQueue;
-  private pending = new Set<string>();
-  private work?: Promise<void>;
-  private timer?: ReturnType<typeof setInterval>;
-  private stopped = false;
   private closers = new Set<() => Promise<void>>();
   onClose(close: () => Promise<void>) {
     this.closers.add(close);
@@ -58,60 +52,24 @@ export class ControlPlane {
       this.catalog,
       (u) => this.changed(u),
     );
-    this.agents = new AgentConnections(
-      db,
-      this.auth,
-      this.observations,
-      (u) => this.changed(u),
-    );
-    this.snapshots = new Snapshots(
-      db,
-      (d) => this.agents.online(d),
-      options.staleMs,
-    );
-    this.scheduler = new Scheduler(
-      db,
-      this.tasks,
-      (d) => this.agents.online(d),
-    );
+    this.snapshots = new Snapshots(db, options.staleMs);
+    this.scheduler = new Scheduler(db, this.tasks);
+    this.sync = new AgentSync(db, this.observations, this.scheduler);
     this.push = new PushQueue(db, options.push ?? {});
   }
   login(secret: string) {
     return this.tokenAuth.login(secret);
   }
-  changed(userId: string) {
-    if (this.stopped) return;
-    this.clients.publish(userId);
-    this.pending.add(userId);
-    if (!this.work) {
-      this.work = this.drain().finally(() => {
-        this.work = undefined;
-      });
+  async changed(userId: string) {
+    // Await request-scoped work. A failed scheduling attempt is retried by the
+    // next agent sync; it must not undo or obscure a committed client mutation.
+    try {
+      await this.scheduler.tick(userId);
+    } catch {
+      console.error("Scheduling deferred until next agent sync");
     }
-  }
-  private async drain() {
-    while (this.pending.size && !this.stopped) {
-      const userId = this.pending.values().next().value!;
-      this.pending.delete(userId);
-      try {
-        if (await this.scheduler.tick(userId)) this.clients.publish(userId);
-        await this.agents.flush(userId);
-      } catch {
-        /* Maintenance retries; never roll back an already committed mutation. */
-      }
-    }
-  }
-  start() {
-    this.timer = setInterval(() => {
-      void this.maintenance().catch(() =>
-        console.error("Control-plane maintenance failed")
-      );
-    }, 5000);
   }
   async maintenance() {
-    const users = await this.db.query<{ id: string }>("SELECT id FROM users");
-    for (const u of users) this.changed(u.id);
-    await this.work;
     await this.push.flush();
   }
   async registerDevice(userId: string, input: unknown) {
@@ -119,7 +77,7 @@ export class ControlPlane {
       await tx.lock(userId);
       return this.catalog.registerDevice(tx, userId, input);
     });
-    this.changed(userId);
+    await this.changed(userId);
     return result;
   }
   async deviceToken(userId: string, deviceId: string, revoke = false) {
@@ -130,12 +88,15 @@ export class ControlPlane {
         "UPDATE auth_tokens SET revoked_at=now() WHERE user_id=$1 AND device_id=$2 AND revoked_at IS NULL",
         [userId, deviceId],
       );
+      await tx.query(
+        "UPDATE devices SET last_seen_at=NULL,sync_session_id=NULL,sync_token_hash=NULL,sync_generation=0,sync_ready=false WHERE id=$1 AND user_id=$2",
+        [deviceId, userId],
+      );
       return revoke
         ? { ok: true }
         : { token: await issue(tx, userId, deviceId) };
     });
-    this.agents.revoke(deviceId);
-    this.changed(userId);
+    await this.changed(userId);
     return result;
   }
   createTask(userId: string, key: string, input: TaskInput) {
@@ -232,12 +193,7 @@ export class ControlPlane {
     );
   }
   async close() {
-    this.stopped = true;
-    clearInterval(this.timer);
     await Promise.all([...this.closers].map((close) => close()));
     this.closers.clear();
-    await this.work;
-    await this.agents.close();
-    this.clients.close();
   }
 }

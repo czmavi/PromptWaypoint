@@ -15,7 +15,7 @@ function canonical(v: unknown): string {
 export class Mutations {
   constructor(
     private db: Database,
-    private changed: (userId: string) => void,
+    private changed: (userId: string) => Promise<void>,
   ) {}
   async run<T>(
     userId: string,
@@ -49,7 +49,7 @@ export class Mutations {
       );
       return response;
     });
-    this.changed(userId);
+    await this.changed(userId);
     return result;
   }
 }

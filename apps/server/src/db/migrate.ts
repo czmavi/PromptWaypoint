@@ -5,7 +5,13 @@ export async function migrate(db: Database) {
     await tx.query(
       "CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())",
     );
-    for (const version of ["001_control_plane", "002_retained_history"]) {
+    for (
+      const version of [
+        "001_control_plane",
+        "002_retained_history",
+        "003_http_sync",
+      ]
+    ) {
       if (
         !(await tx.query(
           "SELECT version FROM schema_migrations WHERE version=$1",

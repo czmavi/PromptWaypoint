@@ -4,7 +4,7 @@ const root = new URL("../src-tauri/", import.meta.url);
 const read = (path: string) => Deno.readTextFile(new URL(path, root));
 const config = JSON.parse(await read("tauri.ios.conf.json"));
 strictEqual(config.identifier, "com.caretsix.aiproductmanager");
-strictEqual(config.productName, "PM.ai");
+strictEqual(config.productName, "Prompt Waypoint");
 strictEqual(config.version, "0.1.0");
 ok(/^[1-9]\d*$/.test(config.bundle.iOS.bundleVersion));
 strictEqual(config.bundle.iOS.minimumSystemVersion, "15.0");
@@ -92,5 +92,5 @@ console.log(
   `iOS configuration and ${icons.images.length} PNG icon entries verified. This does not validate signing or an archive.`,
 );
 console.log(
-  "PM.ai icon master: assets/branding/app-icon.png; generated iOS assets: src-tauri/icons/ios/.",
+  "Prompt Waypoint icon master: assets/branding/app-icon.png; generated iOS assets: src-tauri/icons/ios/.",
 );

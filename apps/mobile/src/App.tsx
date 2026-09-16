@@ -6,7 +6,10 @@ import {
   TaskCard,
   TaskPrompt,
 } from "../../../packages/ui/main.ts";
-import type { TaskStatus } from "../../../packages/core/main.ts";
+import {
+  DEFAULT_SERVER_URL,
+  type TaskStatus,
+} from "../../../packages/core/main.ts";
 import { MobileController } from "./model/controller.ts";
 import { type Destination } from "./model/navigation.ts";
 import { Capture } from "./components/Capture.tsx";
@@ -94,8 +97,8 @@ export default function App(
   if (loading) {
     return (
       <main class="welcome">
-        <span class="brand-mark">p</span>
-        <h1>Companion</h1>
+        <span class="brand-mark" aria-hidden="true">PW</span>
+        <h1>Prompt Waypoint</h1>
         <p>Opening your workspace…</p>
       </main>
     );
@@ -104,7 +107,7 @@ export default function App(
     return (
       <main class="welcome">
         <div class="brand">
-          <span class="brand-mark">p</span>Companion
+          <span class="brand-mark" aria-hidden="true">PW</span>Prompt Waypoint
         </div>
         <span class="eyebrow">YOUR AGENTS. WITH YOU.</span>
         <h1>
@@ -126,21 +129,22 @@ export default function App(
           }}
         >
           <label>
-            Companion server<input
+            Prompt Waypoint server<input
               name="url"
               type="url"
               required
-              placeholder="https://companion.example.com"
+              defaultValue={DEFAULT_SERVER_URL}
+              placeholder={DEFAULT_SERVER_URL}
               autoCapitalize="none"
               autoCorrect="off"
             />
           </label>
           <label>
-            Companion access token<input
+            Prompt Waypoint access token<input
               name="token"
               type="password"
               required
-              placeholder="Your Companion token"
+              placeholder="Your Prompt Waypoint token"
               autoComplete="off"
             />
           </label>
@@ -151,7 +155,7 @@ export default function App(
         {error && <p role="alert" class="error">{error}</p>}
         <small>
           {native
-            ? "Your Companion token stays in this phone’s secure storage."
+            ? "Your Prompt Waypoint token stays in this phone’s secure storage."
             : "Browser preview: your token is kept in memory for this session."}
         </small>
       </main>
@@ -341,7 +345,7 @@ export default function App(
         : tab === "Settings"
         ? (
           <section class="page settings">
-            <span class="eyebrow">COMPANION</span>
+            <span class="eyebrow">PROMPT WAYPOINT</span>
             <h1>Settings</h1>
             <section class="setting-card">
               <h2>Notifications</h2>
@@ -397,7 +401,7 @@ export default function App(
               ))}
             </section>
             <section class="setting-card">
-              <h2>Companion account</h2>
+              <h2>Prompt Waypoint account</h2>
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -410,7 +414,7 @@ export default function App(
                 }}
               >
                 <label>
-                  Renew Companion access token<input
+                  Renew Prompt Waypoint access token<input
                     name="token"
                     type="password"
                     required

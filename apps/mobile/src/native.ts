@@ -1,3 +1,4 @@
+import { DEFAULT_SERVER_URL } from "../../../packages/core/main.ts";
 import { addPluginListener, invoke, isTauri } from "@tauri-apps/api/core";
 import { ServerClient } from "../../../packages/api-client/main.ts";
 import { MobileController } from "./model/controller.ts";
@@ -25,7 +26,7 @@ export async function clearAuth() {
   previewAuth = undefined;
 }
 export function serverURL(input: string) {
-  const url = new URL(input);
+  const url = new URL(input.trim() || DEFAULT_SERVER_URL);
   if (
     url.username || url.password || url.search || url.hash ||
     url.pathname !== "/"
@@ -58,7 +59,7 @@ export async function createController(auth: Auth) {
 }
 export async function connect(auth: Auth) {
   const normalized = { ...auth, url: serverURL(auth.url) };
-  if (!auth.token.trim()) throw new Error("Enter your Companion token");
+  if (!auth.token.trim()) throw new Error("Enter your Prompt Waypoint token");
   const controller = await createController(normalized);
   await controller.sync();
   if (!controller.online) throw new Error(controller.error);
@@ -156,7 +157,9 @@ export async function enablePush(controller: MobileController) {
 
 export async function renewAuth(current: MobileController, token: string) {
   const previous = await readAuth();
-  if (!previous) throw new Error("Connect to your Companion server again");
+  if (!previous) {
+    throw new Error("Connect to your Prompt Waypoint server again");
+  }
   const auth = { url: previous.url, token };
   const next = await createController(auth);
   const snapshot = await next.api.snapshot();

@@ -1,9 +1,8 @@
 # Local Agent
 
-Standalone Deno daemon for Prompt 1. The Fresh server and Tauri applications are
-still their original scaffolds. The root Deno workspace currently covers the
-agent and its four shared packages; the other applications retain their own
-tooling.
+Standalone Deno daemon for local execution and outbound HTTPS synchronization
+with the Prompt Waypoint server. Provider processes and credentials stay on this
+device.
 
 ## Run
 
@@ -19,18 +18,19 @@ deno task agent
 
 The daemon works without desktop or server. Bind is fixed to `127.0.0.1`,
 default port `7431`. State defaults to `~/.pmai-agent`; its `local-token` is a
-private Companion API token (not a provider credential). Desktop must read this
-token locally and use the typed `LocalAgentClient` in `packages/api-client`.
+private Prompt Waypoint API token (not a provider credential). Desktop must read
+this token locally and use the typed `LocalAgentClient` in
+`packages/api-client`.
 
-| Environment                         | Meaning                                                   |
-| ----------------------------------- | --------------------------------------------------------- |
-| `PMAI_AGENT_DIR`                    | Private state directory, SQLite, lock and local API token |
-| `PMAI_AGENT_PORT`                   | Local API port, default 7431                              |
-| `PMAI_DEVICE_NAME`                  | Name used when creating persistent device identity        |
-| `PMAI_RECONCILE_MS`                 | Reconciliation interval, default 60000                    |
-| `PMAI_CODEX_BIN`, `PMAI_CLAUDE_BIN` | Provider executable paths                                 |
-| `PMAI_SERVER_URL`                   | Optional outbound `wss://` endpoint                       |
-| `PMAI_DEVICE_TOKEN`                 | Optional revocable Companion device token from server     |
+| Environment                         | Meaning                                                       |
+| ----------------------------------- | ------------------------------------------------------------- |
+| `PMAI_AGENT_DIR`                    | Private state directory, SQLite, lock and local API token     |
+| `PMAI_AGENT_PORT`                   | Local API port, default 7431                                  |
+| `PMAI_DEVICE_NAME`                  | Name used when creating persistent device identity            |
+| `PMAI_RECONCILE_MS`                 | Reconciliation interval, default 60000                        |
+| `PMAI_CODEX_BIN`, `PMAI_CLAUDE_BIN` | Provider executable paths                                     |
+| `PMAI_SERVER_URL`                   | Server HTTPS origin; defaults to `https://promptwaypoint.com` |
+| `PMAI_DEVICE_TOKEN`                 | Optional revocable Prompt Waypoint device token from server   |
 
 Use a user launchd/systemd service to supervise `deno task agent` with an
 absolute working directory and executable PATH if login persistence is needed.
@@ -141,27 +141,39 @@ Official interface references:
 
 ## Server wire contract
 
-The matching Fresh endpoint is `/ws/agent`; see `../server/README.md` for
+See [server setup](../server/README.md#authentication-and-device-pairing) for
 pairing.
 
-1. Agent opens WSS, sends `{type:"hello", version:1, token, device}`. The server
-   authenticates the token against that device and responds `{type:"welcome"}`.
-2. Agent sends `{type:"registration", device, repositories, profiles}`. Profile
-   projection excludes configuration directories and credentials.
-3. Server sends `{type:"command", command}` using shared command validation. ACK
-   is sent only after durable command acceptance, followed by `commandResult`.
-4. Agent sends `{type:"event", event}` from the persisted outbox. Server must
-   deduplicate `event.id` and send `{type:"eventAck", eventId}` only after
-   committing it. Until ACK, events can be re-uploaded. Outbox survives
-   restart/offline use.
-5. `heartbeat` / `heartbeatAck` run every 15 seconds; 45 seconds without a
-   received frame closes the socket. Reconnect uses jittered exponential backoff
-   up to 60s. Redelivered commands retain their original IDs and cannot restart
-   work.
+Set `PMAI_DEVICE_TOKEN` before starting `deno task agent`. The server defaults
+to `https://promptwaypoint.com`; set `PMAI_SERVER_URL` to override it. Without a
+device token the agent stays local. Existing `wss://<host>/ws/agent`
+configuration is accepted by the updated agent and translated to HTTPS. Update
+both the server and agent; old WebSocket-only agent binaries are not supported
+by the new server.
 
-The server must implement the same handshake and event ACK protocol before cloud
-sync can work. Outbox retention is unbounded while offline; operational
-compaction is intentionally not implemented in this MVP.
+1. After recovering its local journal, the agent registers metadata with
+   `POST /api/agent/connect`, a random session ID and a locally persisted,
+   increasing generation per server origin. Provider config directories and
+   credentials are excluded.
+2. Every four seconds, `POST /api/agent/sync` uploads a bounded batch of outbox
+   events and command ACKs, and receives pending commands and committed event
+   IDs. Local events trigger an earlier sync. Only acknowledged events are
+   removed. Backlogs are drained before the server dispatches new work.
+3. Commands are accepted into SQLite before ACK. Provider calls run
+   independently of synchronization, so they cannot stop heartbeats. Redelivered
+   commands use their original IDs and return the stored result without
+   executing twice.
+4. Request failures back off up to 60 seconds. The server considers presence
+   stale after 45 seconds without a successful sync. A lost response simply
+   retries the same outbox events and session. HTTP 401/403/409 stops
+   synchronization and logs a pairing/restart message; it never automatically
+   reclaims an older session.
+
+All requests require HTTPS and the dedicated device token. A new process fences
+out an older one even across server instances. If restoring an older SQLite
+backup makes the local generation fall behind, rotate the device token and
+restart. Outbox retention remains unbounded while offline; no event is discarded
+merely because the server is unavailable.
 
 ## Checks
 
@@ -175,8 +187,8 @@ deno test --allow-read --allow-write --allow-env --allow-net --allow-run
 ```
 
 `deno task test` runs that test command. Tests use temporary SQLite databases,
-fake providers, an empty isolated Claude SDK profile and a CLI fixture. A
-localhost WebSocket integration test covers reconnect/redelivery. No provider
-installation, login or billable request is required for orchestration tests. The
-shell fixture runs on Unix; native Windows fixture portability is not yet
-covered.
+fake providers, an empty isolated Claude SDK profile and a CLI fixture. HTTP
+integration tests cover lost-response retries, redelivery and synchronization
+while a provider is stalled. No provider installation, login or billable request
+is required for orchestration tests. The shell fixture runs on Unix; native
+Windows fixture portability is not yet covered.

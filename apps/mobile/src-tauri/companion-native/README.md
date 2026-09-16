@@ -1,8 +1,8 @@
-# Companion native mobile bridge
+# Prompt Waypoint native mobile bridge
 
 Local Tauri plugin. Domain logic and HTTP orchestration remain in TypeScript.
 
-- Swift: Keychain storage for one Companion authentication record; APNs
+- Swift: Keychain storage for one Prompt Waypoint authentication record; APNs
   permission and device registration; notification delegate and persistent
   pending taps.
 - Kotlin: Android Keystore AES-GCM storage; FCM registration/service; runtime

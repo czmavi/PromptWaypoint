@@ -467,7 +467,7 @@ async function eventually(
   throw new Error("Condition timed out");
 }
 integration(
-  "real Agent WSS protocol: registration, ACK, reconnect, offline queue",
+  "real Agent HTTPS sync: registration, ACK, reconnect, offline queue",
   async () => {
     const f = await fixture();
     const store = new Store(":memory:");
@@ -507,9 +507,10 @@ integration(
       equal((await f.service.snapshots.read(f.userId)).executions.length, 0);
       sync = new ServerSync(
         agent,
-        "wss://test.invalid",
+        "https://test.invalid",
         f.deviceToken,
-        () => new WebSocket(endpoint.replace("http:", "ws:") + "/ws/agent"),
+        (input, init) =>
+          fetch(new URL(new URL(String(input)).pathname, endpoint), init),
       );
       sync.start();
       await eventually(() => fake.prompts === 1);
@@ -517,15 +518,25 @@ integration(
         (await f.service.task(f.userId, task.id)).status === "running"
       );
       sync.close();
-      await eventually(() => !f.service.agents.online(f.device.id));
+      await f.db.query(
+        "UPDATE devices SET last_seen_at=now()-interval '46 seconds' WHERE id=$1",
+        [f.device.id],
+      );
+      equal(
+        (await f.service.snapshots.read(f.userId)).devices[0].online,
+        false,
+      );
       sync = new ServerSync(
         agent,
-        "wss://test.invalid",
+        "https://test.invalid",
         f.deviceToken,
-        () => new WebSocket(endpoint.replace("http:", "ws:") + "/ws/agent"),
+        (input, init) =>
+          fetch(new URL(new URL(String(input)).pathname, endpoint), init),
       );
       sync.start();
-      await eventually(() => f.service.agents.online(f.device.id));
+      await eventually(async () =>
+        (await f.service.snapshots.read(f.userId)).devices[0].online
+      );
       await f.service.maintenance();
       equal(fake.prompts, 1);
       equal((await client.commands()).length, 1);
@@ -608,8 +619,24 @@ integration(
         commandId,
         status: "completed",
       });
-      const { Dispatcher } = await import("../src/commands/dispatcher.ts");
-      await new Dispatcher(f.db).ack(f.userId, f.device.id, commandId);
+      const principal = await f.service.auth.authenticate(
+        f.deviceToken,
+        "device",
+      );
+      const sessionId = crypto.randomUUID();
+      await f.service.sync.connect(principal, {
+        sessionId,
+        generation: 1,
+        device: { id: f.device.id, name: "Mac", platform: "darwin" },
+        profiles: [],
+        repositories: [],
+      });
+      await f.service.sync.exchange(principal, {
+        sessionId,
+        events: [],
+        hasMore: false,
+        acknowledged: [commandId],
+      });
       equal((await f.service.commands(f.userId))[0].status, "completed");
       equal((await f.service.task(f.userId, task.id)).status, "dispatching");
     } finally {
@@ -618,27 +645,26 @@ integration(
   },
 );
 integration(
-  "SSE change stream is authenticated and shuts down cleanly",
+  "revision polling is authenticated and sees committed changes",
   async () => {
     const f = await fixture();
     try {
-      const abort = new AbortController();
-      const response = f.service.clients.response(f.userId, abort.signal);
-      const reader = response.body!.getReader();
-      ok(
-        new TextDecoder().decode((await reader.read()).value).includes(
-          "connected",
-        ),
+      const handler = createApp(f.service).handler();
+      equal(
+        (await handler(new Request("http://test/api/revision"))).status,
+        401,
       );
-      f.service.clients.publish(f.userId);
-      ok(
-        new TextDecoder().decode((await reader.read()).value).includes(
-          "changed",
-        ),
+      const client = new ServerClient(
+        "http://test",
+        f.token,
+        (input, init) => Promise.resolve(handler(new Request(input, init))),
       );
-      abort.abort();
-      await reader.cancel();
-      reader.releaseLock();
+      const before = await client.revision();
+      await f.service.createTask(f.userId, "revision-task", f.input());
+      ok((await client.revision()).revision !== before.revision);
+      equal((await client.snapshot()).tasks.length, 1);
+      await client.logout();
+      await rejects(() => client.revision());
     } finally {
       await f.close();
     }
@@ -680,6 +706,245 @@ integration(
       equal(snapshot.tasks[0].status, "completed");
       await rejects(() =>
         emit({ ...execution, id: crypto.randomUUID(), repositoryId: "foreign" })
+      );
+    } finally {
+      await f.close();
+    }
+  },
+);
+
+integration(
+  "two instances share presence, revisions, queue scheduling and fenced sessions",
+  async () => {
+    const f = await fixture();
+    const db2 = new Database(url!);
+    let second = new ControlPlane(db2);
+    try {
+      const p = await f.service.auth.authenticate(f.deviceToken, "device");
+      const sessionId = crypto.randomUUID();
+      const registration = {
+        generation: 1,
+        sessionId,
+        device: { id: f.device.id, name: "Mac", platform: "darwin" },
+        profiles: [],
+        repositories: [],
+      };
+      const exchange = {
+        sessionId,
+        events: [],
+        hasMore: false,
+        acknowledged: [],
+      };
+      await f.service.sync.connect(p, registration);
+      const initial = await second.snapshots.revision(f.userId);
+      equal((await second.snapshots.read(f.userId)).devices[0].online, true);
+      await f.service.sync.exchange(p, exchange);
+      // A heartbeat alone must not force a full snapshot download.
+      equal(
+        (await second.snapshots.revision(f.userId)).revision,
+        initial.revision,
+      );
+      const task = await second.createTask(
+        f.userId,
+        "cross-instance-task",
+        f.input(),
+      );
+      await second.taskAction(f.userId, "cross-instance-queue", task.id, {
+        action: "queue",
+      });
+      const replies = await Promise.all([
+        f.service.sync.exchange(p, exchange),
+        second.sync.exchange(p, exchange),
+      ]);
+      const commands = replies.flatMap((r) => r.commands);
+      equal(commands.length, 1);
+      equal((await second.snapshots.read(f.userId)).executions.length, 1);
+      ok(
+        (await f.service.snapshots.revision(f.userId)).revision !==
+          initial.revision,
+      );
+      // Simulate an instance restart and a response lost after the DB commit.
+      await second.close();
+      second = new ControlPlane(db2);
+      await db2.query(
+        "UPDATE commands SET delivered_at=now()-interval '31 seconds' WHERE id=$1",
+        [commands[0].commandId],
+      );
+      const replay = await second.sync.exchange(p, exchange);
+      deepStrictEqual(replay.commands, commands);
+      // Completion replay is deduplicated; the next queue item starts on sync.
+      const next = await second.createTask(f.userId, "next-task", f.input());
+      await second.taskAction(f.userId, "next-queue", next.id, {
+        action: "queue",
+      });
+      const execution = (await second.snapshots.read(f.userId)).executions[0];
+      const event = {
+        id: crypto.randomUUID(),
+        deviceId: f.device.id,
+        type: "execution",
+        at: new Date().toISOString(),
+        data: { ...execution, state: "completed" },
+      };
+      await f.service.sync.exchange(p, { ...exchange, events: [event] });
+      await second.sync.exchange(p, { ...exchange, events: [event] });
+      equal((await second.snapshots.read(f.userId)).executions.length, 2);
+      equal(
+        (await db2.query(
+          "SELECT id FROM agent_events WHERE device_id=$1 AND id=$2",
+          [f.device.id, event.id],
+        )).length,
+        1,
+      );
+      // Session B replaces A across instances; even A's delayed connect retry fails.
+      const newer = {
+        ...registration,
+        generation: 3,
+        sessionId: crypto.randomUUID(),
+      };
+      await second.sync.connect(p, newer);
+      await rejects(
+        () =>
+          f.service.sync.connect(p, {
+            ...registration,
+            generation: 2,
+            sessionId: crypto.randomUUID(),
+          }),
+        /superseded/,
+      );
+      await rejects(() => f.service.sync.exchange(p, exchange), /superseded/);
+      await rejects(
+        () => f.service.sync.connect(p, registration),
+        /superseded/,
+      );
+      await f.service.sync.connect(p, newer); // lost handshake response is safe to retry
+      const beforeOffline = await second.snapshots.revision(f.userId);
+      await db2.query(
+        "UPDATE devices SET last_seen_at=now()-interval '46 seconds' WHERE id=$1",
+        [f.device.id],
+      );
+      equal(
+        (await f.service.snapshots.read(f.userId)).devices[0].online,
+        false,
+      );
+      ok(
+        (await second.snapshots.revision(f.userId)).revision !==
+          beforeOffline.revision,
+      );
+      await second.sync.exchange(p, {
+        ...exchange,
+        sessionId: newer.sessionId,
+      });
+      await f.service.deviceToken(f.userId, f.device.id, true);
+      await rejects(
+        () =>
+          second.sync.exchange(p, { ...exchange, sessionId: newer.sessionId }),
+        /Unauthorized/,
+      );
+      equal((await second.snapshots.read(f.userId)).devices[0].online, false);
+    } finally {
+      await second.close();
+      await db2.close();
+      await f.close();
+    }
+  },
+);
+
+integration(
+  "sync batches commit events and ACK atomically and defer dispatch until replay finishes",
+  async () => {
+    const f = await fixture();
+    try {
+      const p = await f.service.auth.authenticate(f.deviceToken, "device");
+      const sessionId = crypto.randomUUID();
+      await f.service.sync.connect(p, {
+        generation: 1,
+        sessionId,
+        device: { id: f.device.id, name: "Mac", platform: "darwin" },
+        profiles: [],
+        repositories: [],
+      });
+      const task = await f.service.createTask(
+        f.userId,
+        "replay-task",
+        f.input(),
+      );
+      await f.service.taskAction(f.userId, "replay-queue", task.id, {
+        action: "queue",
+      });
+      const before = await f.service.snapshots.revision(f.userId);
+      const event = {
+        id: crypto.randomUUID(),
+        deviceId: f.device.id,
+        type: "repository",
+        at: new Date().toISOString(),
+        data: {
+          id: f.repositoryId,
+          deviceId: f.device.id,
+          name: "Updated",
+          localPath: "/tmp",
+          defaultProviderProfileId: f.profileId,
+        },
+      };
+      const request = {
+        sessionId,
+        events: [event],
+        hasMore: true,
+        acknowledged: [],
+      };
+      await rejects(() =>
+        f.service.sync.exchange(p, {
+          ...request,
+          events: [event, {
+            ...event,
+            id: crypto.randomUUID(),
+            type: "invalid",
+          }],
+        })
+      );
+      equal(
+        (await f.service.snapshots.revision(f.userId)).revision,
+        before.revision,
+      );
+      equal(
+        (await f.db.query(
+          "SELECT id FROM agent_events WHERE device_id=$1 AND id=$2",
+          [f.device.id, event.id],
+        )).length,
+        0,
+      );
+      const response = await f.service.sync.exchange(p, request);
+      deepStrictEqual(response.eventIds, [event.id]);
+      equal(response.commands.length, 0);
+      await f.service.changed(f.userId); // a concurrent client mutation cannot bypass replay
+      equal((await f.service.commands(f.userId)).length, 0);
+      const final = await f.service.sync.exchange(p, {
+        ...request,
+        events: [],
+        hasMore: false,
+      });
+      equal(final.commands.length, 1);
+      // Device credentials are not accepted by client endpoints, or vice versa.
+      const handler = createApp(f.service).handler();
+      equal(
+        (await handler(
+          new Request("http://test/api/revision", {
+            headers: { Authorization: `Bearer ${f.deviceToken}` },
+          }),
+        )).status,
+        401,
+      );
+      equal(
+        (await handler(
+          new Request("http://test/api/agent/sync", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${f.token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(request),
+          }),
+        )).status,
+        401,
       );
     } finally {
       await f.close();
