@@ -2,9 +2,11 @@ import { useEffect, useState } from "preact/hooks";
 import type { DesktopController } from "../model/controller.ts";
 import { ProviderBadge, QuotaDisplay } from "../../../../packages/ui/main.ts";
 import { RepositoryForm } from "./RepositoryForm.tsx";
+import { ProfileDiscovery } from "./ProfileDiscovery.tsx";
 import {
   loginEnabled,
   native,
+  pickConfigDirectory,
   reconnect,
   setLoginEnabled,
   token,
@@ -13,6 +15,8 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
   const [error, setError] = useState("");
   const [prefs, setPrefs] = useState(c.preferences);
   const [auto, setAuto] = useState(false);
+  const [configDirectory, setConfigDirectory] = useState("");
+  const [choosingDirectory, setChoosingDirectory] = useState(false);
   useEffect(() => {
     if (native) {
       void loginEnabled().then(setAuto).catch(() => {});
@@ -78,6 +82,12 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
           Use local config directories already authenticated with the provider.
           Prompt Waypoint manages metadata only.
         </p>
+        <ProfileDiscovery
+          api={c.localApi}
+          online={c.agentOnline}
+          profilesVersion={JSON.stringify(c.local?.profiles.map((p) => p.id))}
+          onAdded={() => c.refresh()}
+        />
         {c.profiles.map((p) => (
           <div class="profile-row">
             <ProviderBadge provider={p.provider} name={p.name} />
@@ -120,14 +130,16 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
             ev.preventDefault();
             const f = ev.currentTarget;
             const d = new FormData(f);
+            if (!configDirectory.trim() || choosingDirectory) return;
             void perform(async () => {
               await c.localApi!.addProfile({
                 provider: d.get("provider") as "codex" | "claude",
                 name: String(d.get("name")),
-                configDirectory: String(d.get("directory")),
+                configDirectory,
                 autoResume: false,
               });
               f.reset();
+              setConfigDirectory("");
             });
           }}
         >
@@ -146,8 +158,39 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
             required
             placeholder="Local config directory"
             aria-label="Config directory"
+            value={configDirectory}
+            readOnly={native}
+            onInput={(ev) => setConfigDirectory(ev.currentTarget.value)}
           />
-          <button type="submit" disabled={!c.agentOnline}>Add profile</button>
+          {native && (
+            <button
+              type="button"
+              disabled={choosingDirectory}
+              onClick={async () => {
+                setChoosingDirectory(true);
+                try {
+                  const directory = await pickConfigDirectory(
+                    configDirectory || undefined,
+                  );
+                  if (directory !== null) setConfigDirectory(directory);
+                  setError("");
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : String(e));
+                } finally {
+                  setChoosingDirectory(false);
+                }
+              }}
+            >
+              Choose folder…
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={!c.agentOnline || choosingDirectory ||
+              !configDirectory.trim()}
+          >
+            Add profile
+          </button>
         </form>
       </section>
       <section>

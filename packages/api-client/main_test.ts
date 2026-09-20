@@ -1,5 +1,21 @@
 import { strictEqual } from "node:assert/strict";
 import { LocalAgentClient } from "./main.ts";
+Deno.test("local profile discovery uses the authenticated local endpoint", async () => {
+  const client = new LocalAgentClient(
+    "http://127.0.0.1:7431",
+    "local",
+    (url, init) => {
+      strictEqual(String(url), "http://127.0.0.1:7431/profiles/discover");
+      strictEqual(init?.method, "GET");
+      strictEqual(
+        new Headers(init?.headers).get("authorization"),
+        "Bearer local",
+      );
+      return Promise.resolve(Response.json({ profiles: [], warnings: [] }));
+    },
+  );
+  strictEqual((await client.discoverProfiles()).profiles.length, 0);
+});
 Deno.test("client sends auth and preserves command id", async () => {
   const client = new LocalAgentClient(
     "http://127.0.0.1:7431",

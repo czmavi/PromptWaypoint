@@ -5,6 +5,7 @@ import {
 } from "../../../packages/core/main.ts";
 import { object, string } from "../../../packages/protocol/main.ts";
 import { Agent } from "./agent.ts";
+import { discoverProviderProfiles } from "./providers/profile-discovery.ts";
 export function localApi(
   agent: Agent,
   token: string,
@@ -13,6 +14,7 @@ export function localApi(
     "http://tauri.localhost",
     "https://tauri.localhost",
   ],
+  discoverProfiles = discoverProviderProfiles,
 ) {
   return async (req: Request): Promise<Response> => {
     const url = new URL(req.url);
@@ -95,6 +97,12 @@ export function localApi(
           executions: agent.store.all("executions"),
         };
       } else if (
+        req.method === "GET" && url.pathname === "/profiles/discover"
+      ) {
+        data = await discoverProfiles(
+          agent.store.all<ProviderProfile>("profiles"),
+        );
+      } else if (
         req.method === "GET" &&
         ["/repositories", "/profiles", "/sessions", "/executions"].includes(
           url.pathname,
@@ -155,6 +163,16 @@ export function localApi(
           configDirectory: directory,
           autoResume: v.autoResume === true,
         };
+        // Repeated discovery/import requests must not create duplicate adapters.
+        const existing = agent.store.all<ProviderProfile>("profiles").find((
+          profile,
+        ) =>
+          profile.provider === p.provider &&
+          profile.configDirectory === directory
+        );
+        if (existing) {
+          return Response.json(existing, { headers });
+        }
         agent.store.put("profiles", p.id, p);
         agent.emit("profile", {
           id: p.id,

@@ -4,6 +4,11 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { Editor } from "../src/components/Editor.tsx";
 import { RepositoryForm } from "../src/components/RepositoryForm.tsx";
+import { ProfileDiscovery } from "../src/components/ProfileDiscovery.tsx";
+import type {
+  DiscoveredProviderProfile,
+  ProviderProfile,
+} from "../../../packages/core/main.ts";
 import { draft, fixture } from "./fixture.ts";
 import { QuotaDisplay, StatusBadge } from "../../../packages/ui/main.ts";
 async function withDOM(
@@ -39,6 +44,135 @@ function fill(
     new window.Event("input", { bubbles: true }) as unknown as Event,
   );
 }
+Deno.test("profile discovery scans on open, retries failures and imports a candidate only once", () =>
+  withDOM(async (root) => {
+    const candidate: DiscoveredProviderProfile = {
+      provider: "codex",
+      name: "Codex — Default",
+      configDirectory: "/tmp/codex",
+      source: "default",
+    };
+    const added: Omit<ProviderProfile, "id">[] = [];
+    let failScan = true;
+    let failAdd = true;
+    let scans = 0;
+    let refreshes = 0;
+    const api = {
+      discoverProfiles: () => {
+        scans++;
+        return failScan
+          ? Promise.reject(new Error("offline"))
+          : Promise.resolve({
+            profiles: added.length ? [] : [candidate],
+            warnings: [],
+          });
+      },
+      addProfile: (profile: Omit<ProviderProfile, "id">) => {
+        if (failAdd) return Promise.reject(new Error("offline"));
+        added.push(profile);
+        return Promise.resolve({ id: "new", ...profile });
+      },
+    };
+    const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+    await act(() => {
+      render(
+        <ProfileDiscovery
+          api={api}
+          online
+          profilesVersion=""
+          onAdded={() => {
+            refreshes++;
+            return Promise.resolve();
+          }}
+        />,
+        root,
+      );
+    });
+    await act(flush);
+    assert.equal(scans, 1);
+    assert.match(root.textContent!, /Could not discover profiles/);
+    failScan = false;
+    await act(() => {
+      root.querySelector<HTMLButtonElement>("button")!.click();
+    });
+    await act(flush);
+    assert.match(root.textContent!, /Codex — Default/);
+    assert.match(root.textContent!, /have not been checked/);
+    const add = () =>
+      root.querySelector<HTMLButtonElement>(
+        'button[aria-label="Add Codex — Default"]',
+      )!.click();
+    await act(async () => {
+      add();
+      await flush();
+    });
+    assert.match(root.textContent!, /Could not add this profile/);
+    assert.equal(added.length, 0);
+    failAdd = false;
+    await act(async () => {
+      add();
+      add();
+      await flush();
+    });
+    await act(flush);
+    assert.deepEqual(added, [{
+      provider: "codex",
+      name: candidate.name,
+      configDirectory: candidate.configDirectory,
+      autoResume: false,
+    }]);
+    assert.equal(refreshes, 1);
+    assert.match(root.textContent!, /No new profiles found/);
+  }));
+
+Deno.test("profile discovery does not scan offline and discards results from a disconnected agent", () =>
+  withDOM(async (root) => {
+    let scans = 0;
+    let resolve!: (
+      value: { profiles: DiscoveredProviderProfile[]; warnings: string[] },
+    ) => void;
+    const api = {
+      discoverProfiles: () => {
+        scans++;
+        return new Promise<
+          { profiles: DiscoveredProviderProfile[]; warnings: string[] }
+        >((done) => resolve = done);
+      },
+      addProfile: (
+        _profile: Omit<ProviderProfile, "id">,
+      ): Promise<ProviderProfile> => Promise.reject(new Error("unused")),
+    };
+    const show = (online: boolean) =>
+      render(
+        <ProfileDiscovery
+          api={api}
+          online={online}
+          profilesVersion=""
+          onAdded={() => Promise.resolve()}
+        />,
+        root,
+      );
+    await act(() => show(false));
+    assert.equal(scans, 0);
+    assert.match(root.textContent!, /Connect the Local Agent/);
+    await act(() => show(true));
+    assert.equal(scans, 1);
+    await act(() => show(false));
+    await act(async () => {
+      resolve({
+        profiles: [{
+          provider: "codex",
+          name: "Stale profile",
+          configDirectory: "/old",
+          source: "default",
+        }],
+        warnings: [],
+      });
+      await Promise.resolve();
+    });
+    assert.ok(!root.textContent!.includes("Stale profile"));
+    assert.match(root.textContent!, /Connect the Local Agent/);
+  }));
 Deno.test("repository picker preserves cancellation and custom names, and submits the selected absolute path", () =>
   withDOM(async (root, window) => {
     let selection: string | null = null;

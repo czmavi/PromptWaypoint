@@ -11,9 +11,20 @@ export const native = isTauri();
 export async function pickProjectDirectory(
   path?: string,
 ): Promise<string | null> {
+  return await pickDirectory("Choose project folder", path);
+}
+export async function pickConfigDirectory(
+  path?: string,
+): Promise<string | null> {
+  return await pickDirectory("Choose provider configuration folder", path);
+}
+async function pickDirectory(
+  title: string,
+  path?: string,
+): Promise<string | null> {
   const { open } = await import("@tauri-apps/plugin-dialog");
   return await open({
-    title: "Choose project folder",
+    title,
     directory: true,
     multiple: false,
     defaultPath: path || undefined,

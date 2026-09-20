@@ -45,18 +45,19 @@ native Tauri origins are allowed; other browser origins are rejected. The API
 does not accept tokens in URLs. Use `/state` for a coherent UI refresh; GET
 collection routes also exist.
 
-| Method / route                                               | Payload / result                                                                                    |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| GET `/state`                                                 | Device, repositories with path availability, profiles with capabilities/quota, sessions, executions |
-| GET `/repositories`, `/profiles`, `/sessions`, `/executions` | Collection                                                                                          |
-| POST `/repositories`                                         | `{name, localPath, defaultProviderProfileId?}`; random identity                                     |
-| POST `/profiles`                                             | `{provider, name, configDirectory, autoResume?}`; random identity                                   |
-| PATCH `/repositories/:id`                                    | `{name?, defaultProviderProfileId?: string \| null}`                                                |
-| PATCH `/profiles/:id`                                        | `{name?, autoResume?}`; changing directory/provider requires a new profile                          |
-| DELETE `/repositories/:id`, `/profiles/:id`                  | Reject unfinished executions or referenced default profiles                                         |
-| POST `/commands`                                             | Shared runtime-validated command below                                                              |
-| POST `/refresh`                                              | Reconcile all profiles                                                                              |
-| WS `/events`                                                 | JSON events; subprotocols `pmai-events`, `pmai-auth.<local-token>`                                  |
+| Method / route                                               | Payload / result                                                                                                     |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| GET `/state`                                                 | Device, repositories with path availability, profiles with capabilities/quota, sessions, executions                  |
+| GET `/repositories`, `/profiles`, `/sessions`, `/executions` | Collection                                                                                                           |
+| POST `/repositories`                                         | `{name, localPath, defaultProviderProfileId?}`; random identity                                                      |
+| POST `/profiles`                                             | `{provider, name, configDirectory, autoResume?}`; creates a profile or returns the existing provider/directory match |
+| GET `/profiles/discover`                                     | Local-only configuration candidates not already registered, plus discovery warnings                                  |
+| PATCH `/repositories/:id`                                    | `{name?, defaultProviderProfileId?: string \| null}`                                                                 |
+| PATCH `/profiles/:id`                                        | `{name?, autoResume?}`; changing directory/provider requires a new profile                                           |
+| DELETE `/repositories/:id`, `/profiles/:id`                  | Reject unfinished executions or referenced default profiles                                                          |
+| POST `/commands`                                             | Shared runtime-validated command below                                                                               |
+| POST `/refresh`                                              | Reconcile all profiles                                                                                               |
+| WS `/events`                                                 | JSON events; subprotocols `pmai-events`, `pmai-auth.<local-token>`                                                   |
 
 ```ts
 const command = {

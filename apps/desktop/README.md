@@ -27,6 +27,23 @@ Secret Service. Provider credentials are neither read nor displayed. Add
 repositories and already authenticated provider config directories in Settings,
 then select a default profile for each repository.
 
+Provider Profiles automatically asks the Local Agent to discover configuration
+folders when Settings opens or the agent reconnects. **Add** imports a found
+configuration, and **Scan again** refreshes the suggestions. Existing profiles
+are excluded. Discovery checks the agent user's `~/.codex`, `~/.claude`, and the
+agent process's `CODEX_HOME` / `CLAUDE_CONFIG_DIR` overrides. It resolves
+symlinks and deduplicates by provider and directory; it never scans the whole
+disk, reads credential contents, or verifies sign-in. Found folders are not
+proof that a provider CLI is installed or authenticated. Custom directories can
+also be selected with **Choose folder…** in the native app.
+
+Update and restart the Local Agent along with the desktop app for profile
+discovery. The authenticated `/profiles/discover` endpoint is local only;
+configuration paths are not sent to the cloud server. Importing the same
+provider/directory again returns its existing profile without changing its name
+or Auto Resume setting. Newly discovered profiles start with Auto Resume
+disabled.
+
 Use **Choose folder…** under Repositories to select a project directory in the
 system dialog. Its folder name becomes the editable repository name; the
 selected path stays visible and **Change folder…** lets you replace it. Browser

@@ -118,6 +118,7 @@ export function fixture() {
     removeRepository: () => Promise.resolve({}),
     updateRepository: () => Promise.reject(new Error("unused")),
     addProfile: () => Promise.reject(new Error("unused")),
+    discoverProfiles: () => Promise.resolve({ profiles: [], warnings: [] }),
     updateProfile: () => Promise.reject(new Error("unused")),
     removeProfile: () => Promise.resolve({}),
   };

@@ -27,6 +27,17 @@ export interface ProviderProfile {
   configDirectory: string;
   autoResume: boolean;
 }
+// Local Agent only; directory paths are never part of cloud profile metadata.
+export interface DiscoveredProviderProfile {
+  provider: Provider;
+  name: string;
+  configDirectory: string;
+  source: "default" | "environment";
+}
+export interface ProfileDiscoveryResult {
+  profiles: DiscoveredProviderProfile[];
+  warnings: string[];
+}
 export interface Quota {
   state: "available" | "exhausted" | "unknown" | "unsupported";
   observedAt: string;

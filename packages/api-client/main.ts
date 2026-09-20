@@ -1,6 +1,7 @@
 import type {
   Device,
   Execution,
+  ProfileDiscoveryResult,
   ProviderProfile,
   Repository,
   Session,
@@ -59,6 +60,9 @@ export class LocalAgentClient {
   }
   addProfile(profile: Omit<ProviderProfile, "id">): Promise<ProviderProfile> {
     return this.request<ProviderProfile>("/profiles", "POST", profile);
+  }
+  discoverProfiles(): Promise<ProfileDiscoveryResult> {
+    return this.request<ProfileDiscoveryResult>("/profiles/discover");
   }
   updateProfile(
     id: string,

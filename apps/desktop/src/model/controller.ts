@@ -47,6 +47,7 @@ export type LocalApi = Pick<
   | "removeRepository"
   | "updateRepository"
   | "addProfile"
+  | "discoverProfiles"
   | "updateProfile"
   | "removeProfile"
 >;
