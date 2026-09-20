@@ -84,7 +84,7 @@ deno task tauri ios build --debug --target aarch64-sim --no-sign --ci
 ```
 
 The iOS application is **Prompt Waypoint**, bundle ID
-`com.caretsix.aiproductmanager`, minimum iOS 15.0, marketing version 0.1.0 and
+`com.caretsix.aiproductmanager`, minimum iOS 16.4, marketing version 0.1.0 and
 build number 1. Canonical settings live in `src-tauri/tauri.ios.conf.json` and
 its `src-tauri/ios/project.yml.hbs` template. Regeneration preserves Debug APNs
 `development` and Release APNs `production`, automatic signing, the `pmai`
@@ -94,8 +94,12 @@ remain `mobile` / `mobile_iOS`.
 See [TESTFLIGHT.md](TESTFLIGHT.md) for release validation, required Apple steps,
 version increments, APNs `.p8` server configuration and current blockers. The
 new Prompt Waypoint icon is sourced from `assets/branding/app-icon.png`. The
-unsigned Release archive and LaunchScreen compile successfully. No signed
-TestFlight archive or live push delivery has been validated.
+unsigned Release archive and LaunchScreen compile successfully. `ios:prepare`
+validates the regenerated project; `ios:build:unsigned` also checks the actual
+archive and its privacy manifest. `ios:export:profile` supports distribution
+without a registered development device, using an installed App Store profile
+and an existing signing identity. Live TestFlight/APNs delivery remains
+unverified.
 
 ### Android
 
@@ -140,7 +144,7 @@ They use fake server responses and do not submit work to live provider accounts.
 SDK-only iOS code check when Tauri cannot discover a runnable iOS platform:
 
 ```sh
-IPHONEOS_DEPLOYMENT_TARGET=15.0 cargo check \
+IPHONEOS_DEPLOYMENT_TARGET=16.4 cargo check \
   --manifest-path apps/mobile/src-tauri/Cargo.toml --target aarch64-apple-ios
 ```
 

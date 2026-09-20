@@ -1,5 +1,11 @@
 # PM.ai: připravenost na TestFlight a App Store
 
+> Aktualizace 20. 9. 2026: níže je původní audit ze 14. 9., nikoli aktuální
+> seznam nevyřešených položek. Nová příprava doplňuje privacy manifest,
+> sjednocuje minimum na iOS 16.4, nahrazuje nepodporované síťové API a přidává
+> kontrolu skutečného archivu. Aktuální postup a stav ověření jsou v
+> [mobilním návodu pro TestFlight](apps/mobile/TESTFLIGHT.md).
+
 Datum analýzy: **14. 9. 2026**. Výchozí commit: `8f06b4f` (`server`). Rozsah:
 iOS/iPadOS aplikace `apps/mobile` a server/agent, na kterých závisí. Mac App
 Store ani Android nejsou součástí tohoto checklistu.

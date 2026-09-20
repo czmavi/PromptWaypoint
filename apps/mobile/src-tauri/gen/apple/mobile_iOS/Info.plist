@@ -25,16 +25,6 @@
 			<array>
 				<string>pmai</string>
 			</array>
-			<key>CFBundleURLName</key>
-			<string>pmai</string>
-		</dict>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>pmai</string>
-			</array>
-			<key>CFBundleURLName</key>
-			<string>pmai</string>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>

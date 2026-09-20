@@ -17,6 +17,7 @@
 		CA2B61364055E9EEEF2EB371 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F92176EEB07ED815FD79FFBA /* QuartzCore.framework */; };
 		CB7A1F1F880480EF4B5ED8EA /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3C679D4B46A439474DEE2848 /* main.mm */; };
 		D10AA5DB440FA9B8778A1382 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 79119B50A3ABC34A95F83484 /* Security.framework */; };
+		D517D602FA08E8B7D15BBF25 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 6A1BE22E0AF10546DC44346E /* PrivacyInfo.xcprivacy */; };
 		DB1EE932B366C88371CCF69C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 929D63247A3F107EDCB552B7 /* Assets.xcassets */; };
 		FC2464E9251091FC24E58422 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E4FFE5423099F6F581293509 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
@@ -28,6 +29,7 @@
 		2F64922EAAC2B89DE84A5C39 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
 		39E2E6AE4CB7316C2D96DD3F /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
 		3C679D4B46A439474DEE2848 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		6A1BE22E0AF10546DC44346E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6C293BF49E3783C6E09A86AE /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
 		70DC581B877FC7470E4B9B80 /* mobile_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = mobile_iOS.entitlements; sourceTree = "<group>"; };
 		79119B50A3ABC34A95F83484 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
@@ -86,11 +88,13 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		928CE040DBB6E5E87CBE3082 /* Externals */ = {
+		85F2ACA3981ED9FA7CE445EE /* ios */ = {
 			isa = PBXGroup;
 			children = (
+				6A1BE22E0AF10546DC44346E /* PrivacyInfo.xcprivacy */,
 			);
-			path = Externals;
+			name = ios;
+			path = ../../ios;
 			sourceTree = "<group>";
 		};
 		9DE8EEF7437C59695F3BC465 /* Frameworks */ = {
@@ -123,7 +127,7 @@
 				2F64922EAAC2B89DE84A5C39 /* assets */,
 				929D63247A3F107EDCB552B7 /* Assets.xcassets */,
 				E4FFE5423099F6F581293509 /* LaunchScreen.storyboard */,
-				928CE040DBB6E5E87CBE3082 /* Externals */,
+				85F2ACA3981ED9FA7CE445EE /* ios */,
 				C045867500BC6031AD793338 /* mobile_iOS */,
 				709D5C6E4C6D43AF0E2D9979 /* Sources */,
 				E959A6C0B8C9CEFFE15BF8AC /* src */,
@@ -213,6 +217,7 @@
 			files = (
 				DB1EE932B366C88371CCF69C /* Assets.xcassets in Resources */,
 				FC2464E9251091FC24E58422 /* LaunchScreen.storyboard in Resources */,
+				D517D602FA08E8B7D15BBF25 /* PrivacyInfo.xcprivacy in Resources */,
 				112D0BAB8DF57F8B380BBEC4 /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -339,7 +344,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -396,7 +401,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

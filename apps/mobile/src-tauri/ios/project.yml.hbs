@@ -34,12 +34,13 @@ targets:
     sources:
       - path: Sources
       - path: Assets.xcassets
-      - path: Externals
       - path: mobile_iOS
       - path: assets
         buildPhase: resources
         type: folder
       - path: LaunchScreen.storyboard
+      - path: ../../ios/PrivacyInfo.xcprivacy
+        buildPhase: resources
     info:
       path: mobile_iOS/Info.plist
       properties:

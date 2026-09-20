@@ -47,14 +47,9 @@ export async function createController(auth: Auth) {
   const scope = [...new Uint8Array(bytes)].map((b) =>
     b.toString(16).padStart(2, "0")
   ).join("");
-  const transport: typeof fetch = (input, init) =>
-    fetch(input, {
-      ...init,
-      signal: init?.signal ?? AbortSignal.timeout(15000),
-    });
   return new MobileController(
     new MobileStore(localStorage, scope),
-    new ServerClient(url, auth.token, transport),
+    new ServerClient(url, auth.token),
   );
 }
 export async function connect(auth: Auth) {

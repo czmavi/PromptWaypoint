@@ -4,8 +4,12 @@
     "build": "deno check src/main.tsx && vite build",
     "tauri": "tauri",
     "ios:check": "deno run --allow-read --allow-run=plutil scripts/ios-check.ts",
-    "ios:release": "deno task tauri ios build --archive-only --open",
-    "ios:export": "deno task tauri ios build --export-method app-store-connect",
+    "ios:archive:check": "deno run --allow-read --allow-run=plutil,codesign,lipo scripts/ios-archive-check.ts",
+    "ios:prepare": "deno task tauri ios init --ci && deno task ios:icons:sync && deno task ios:check",
+    "ios:release": "deno task ios:check && deno task tauri ios build --archive-only --open",
+    "ios:export": "deno task ios:check && deno task tauri ios build --export-method app-store-connect",
+    "ios:export:profile": "python3 scripts/ios-export-profile.py",
+    "ios:build:unsigned": "deno task ios:check && deno task tauri ios build --ci --no-sign --archive-only && deno task ios:archive:check --unsigned",
     "ios:icons:sync": "deno run --allow-read --allow-write=src-tauri/gen/apple/Assets.xcassets scripts/ios-icons-sync.ts"
   },
   "imports": {

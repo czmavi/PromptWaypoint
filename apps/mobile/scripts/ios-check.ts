@@ -1,13 +1,19 @@
 // Read-only checks of the canonical settings and regenerated Xcode project.
-import { ok, strictEqual } from "node:assert/strict";
+import { deepStrictEqual, ok, strictEqual } from "node:assert/strict";
 const root = new URL("../src-tauri/", import.meta.url);
 const read = (path: string) => Deno.readTextFile(new URL(path, root));
 const config = JSON.parse(await read("tauri.ios.conf.json"));
 strictEqual(config.identifier, "com.caretsix.aiproductmanager");
 strictEqual(config.productName, "Prompt Waypoint");
-strictEqual(config.version, "0.1.0");
+ok(/^\d+\.\d+\.\d+$/.test(config.version));
 ok(/^[1-9]\d*$/.test(config.bundle.iOS.bundleVersion));
-strictEqual(config.bundle.iOS.minimumSystemVersion, "15.0");
+strictEqual(config.bundle.iOS.minimumSystemVersion, "16.4");
+const baseConfig = JSON.parse(await read("tauri.conf.json"));
+strictEqual(
+  baseConfig.bundle.iOS.minimumSystemVersion,
+  config.bundle.iOS.minimumSystemVersion,
+);
+ok((await read("companion-native/ios/Package.swift")).includes('.iOS("16.4")'));
 strictEqual(config.bundle.iOS.template, "src-tauri/ios/project.yml.hbs");
 async function plist(path: string) {
   const result = await new Deno.Command("plutil", {
@@ -32,6 +38,68 @@ const entitlements = await plist(
 );
 strictEqual(entitlements["aps-environment"], "$(PMAI_APNS_ENVIRONMENT)");
 const project = await plist("gen/apple/mobile.xcodeproj/project.pbxproj");
+const privacy = await plist("ios/PrivacyInfo.xcprivacy");
+strictEqual(privacy.NSPrivacyTracking, false);
+deepStrictEqual(privacy.NSPrivacyTrackingDomains, []);
+for (
+  const [category, reason] of [
+    ["UserDefaults", "CA92.1"],
+    ["FileTimestamp", "C617.1"],
+  ]
+) {
+  ok(
+    privacy.NSPrivacyAccessedAPITypes.some((entry: {
+      NSPrivacyAccessedAPIType: string;
+      NSPrivacyAccessedAPITypeReasons: string[];
+    }) =>
+      entry.NSPrivacyAccessedAPIType ===
+        `NSPrivacyAccessedAPICategory${category}` &&
+      entry.NSPrivacyAccessedAPITypeReasons.includes(reason)
+    ),
+    `Missing privacy reason: ${category}`,
+  );
+}
+const resources = Object.values(project.objects).filter((object) =>
+  (object as { isa: string }).isa === "PBXResourcesBuildPhase"
+) as { files: string[] }[];
+ok(
+  resources.some((phase) =>
+    phase.files.some((id) => {
+      const fileRef = project.objects[id].fileRef;
+      const reference = project.objects[fileRef];
+      return reference?.path === "PrivacyInfo.xcprivacy" &&
+        Object.values(project.objects).some((value) => {
+          const group = value as {
+            isa: string;
+            path?: string;
+            children?: string[];
+          };
+          return group.isa === "PBXGroup" && group.path === "../../ios" &&
+            group.children?.includes(fileRef);
+        });
+    })
+  ),
+  "PrivacyInfo.xcprivacy must be in the Xcode resources build phase; regenerate the project",
+);
+ok(
+  resources.every((phase) =>
+    phase.files.every((id) => {
+      const reference = project.objects[project.objects[id].fileRef];
+      return !reference?.path?.endsWith(".a");
+    })
+  ),
+  "Static libraries must be linked, not copied into app resources",
+);
+const rootProject = project.objects[project.rootObject];
+for (
+  const id of project.objects[rootProject.buildConfigurationList]
+    .buildConfigurations
+) {
+  strictEqual(
+    String(project.objects[id].buildSettings.IPHONEOS_DEPLOYMENT_TARGET),
+    config.bundle.iOS.minimumSystemVersion,
+  );
+}
 let configurations = 0;
 for (
   const object of Object.values(project.objects) as {

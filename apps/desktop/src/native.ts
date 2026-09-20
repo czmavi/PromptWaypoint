@@ -8,6 +8,12 @@ import {
 import { DesktopController, serialized } from "./model/controller.ts";
 import { BrowserPersistence } from "./model/storage.ts";
 export const native = isTauri();
+export async function loginEnabled(): Promise<boolean> {
+  return native ? await invoke<boolean>("login_enabled") : false;
+}
+export async function setLoginEnabled(enabled: boolean): Promise<boolean> {
+  return await invoke<boolean>("set_login_enabled", { enabled });
+}
 const memory = new Map<string, string>();
 export async function token(name: string, value?: string): Promise<string> {
   if (native) {
@@ -38,11 +44,7 @@ export async function makeController() {
     agentToken = await invoke<string>("agent_token").catch(() => "");
   }
   const serverToken = await token("server").catch(() => "");
-  const transport: typeof fetch = (input, init) =>
-    fetch(input, {
-      ...init,
-      signal: init?.signal ?? AbortSignal.timeout(15000),
-    });
+  const transport: typeof fetch = (input, init) => fetch(input, init);
   const devProxy = import.meta.env?.DEV &&
     prefs.agentUrl === "http://127.0.0.1:7431";
   const agentTransport: typeof fetch = (input, init) => {

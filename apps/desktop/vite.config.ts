@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [preact(), tailwindcss()],
   resolve: { dedupe: ["preact"] },
   clearScreen: false,
+  build: { target: "safari16.4", cssTarget: "safari16.4" },
   server: {
     port: 1420,
     strictPort: true,

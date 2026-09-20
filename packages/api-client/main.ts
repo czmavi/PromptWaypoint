@@ -7,6 +7,7 @@ import type {
 } from "../core/main.ts";
 import type { Command, CommandResult } from "../protocol/main.ts";
 import type { ProviderCapabilities } from "../provider-types/main.ts";
+import { withRequestTimeout } from "./timeout.ts";
 export interface LocalState {
   device: Device;
   repositories: Repository[];
@@ -25,16 +26,19 @@ export class LocalAgentClient {
     method = "GET",
     body?: unknown,
   ): Promise<T> {
-    const r = await this.transport(new URL(path, this.baseUrl), {
-      method,
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        "Content-Type": "application/json",
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
+    return await withRequestTimeout(async (signal) => {
+      const r = await this.transport(new URL(path, this.baseUrl), {
+        method,
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          "Content-Type": "application/json",
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal,
+      });
+      if (!r.ok) throw new Error(`Local Agent: ${r.status}`);
+      return await r.json() as T;
     });
-    if (!r.ok) throw new Error(`Local Agent: ${r.status}`);
-    return r.json();
   }
   state(): Promise<LocalState> {
     return this.request<LocalState>("/state");

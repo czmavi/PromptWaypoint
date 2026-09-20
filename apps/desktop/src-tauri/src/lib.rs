@@ -4,6 +4,63 @@ use tauri::{
     Manager,
 };
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+#[tauri::command]
+fn login_enabled(app: tauri::AppHandle) -> Result<bool, String> {
+    #[cfg(target_os = "macos")]
+    {
+        let _ = app;
+        use objc2_service_management::{SMAppService, SMAppServiceStatus};
+        // macOS 13.3 is the deployment minimum; this API is available since 13.
+        Ok(unsafe { SMAppService::mainAppService().status() == SMAppServiceStatus::Enabled })
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        use tauri_plugin_autostart::ManagerExt;
+        app.autolaunch().is_enabled().map_err(|e| e.to_string())
+    }
+}
+#[tauri::command]
+fn set_login_enabled(app: tauri::AppHandle, enabled: bool) -> Result<bool, String> {
+    #[cfg(target_os = "macos")]
+    {
+        use objc2_service_management::{SMAppService, SMAppServiceStatus};
+        // Register only in response to the user's explicit Settings toggle.
+        unsafe {
+            let service = SMAppService::mainAppService();
+            let status = service.status();
+            if enabled && status != SMAppServiceStatus::Enabled {
+                if status == SMAppServiceStatus::RequiresApproval {
+                    return Err(
+                        "Allow Prompt Waypoint in System Settings > General > Login Items.".into(),
+                    );
+                }
+                service
+                    .registerAndReturnError()
+                    .map_err(|e| e.to_string())?;
+            } else if !enabled && status != SMAppServiceStatus::NotRegistered {
+                service
+                    .unregisterAndReturnError()
+                    .map_err(|e| e.to_string())?;
+            }
+            if enabled && service.status() == SMAppServiceStatus::RequiresApproval {
+                return Err(
+                    "Allow Prompt Waypoint in System Settings > General > Login Items.".into(),
+                );
+            }
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        use tauri_plugin_autostart::ManagerExt;
+        let result = if enabled {
+            app.autolaunch().enable()
+        } else {
+            app.autolaunch().disable()
+        };
+        result.map_err(|e| e.to_string())?;
+    }
+    login_enabled(app)
+}
 fn entry(name: &str) -> Result<keyring::Entry, String> {
     if !["agent", "server"].contains(&name) {
         return Err("Unknown Prompt Waypoint credential".into());
@@ -65,8 +122,12 @@ pub fn run() {
                 .build(),
         )
         .setup(|app| {
-            app.global_shortcut()
-                .register("CommandOrControl+Shift+Space")?;
+            if let Err(error) = app
+                .global_shortcut()
+                .register("CommandOrControl+Shift+Space")
+            {
+                eprintln!("Quick Capture shortcut unavailable: {error}");
+            }
             let open = MenuItem::with_id(app, "open", "Open Prompt Waypoint", true, None::<&str>)?;
             let capture = MenuItem::with_id(app, "capture", "Quick Capture", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit Prompt Waypoint", true, None::<&str>)?;
@@ -100,7 +161,9 @@ pub fn run() {
             read_token,
             write_token,
             agent_token,
-            show_capture
+            show_capture,
+            login_enabled,
+            set_login_enabled
         ])
         .run(tauri::generate_context!())
         .expect("error while running Prompt Waypoint");

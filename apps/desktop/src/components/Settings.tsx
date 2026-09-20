@@ -1,15 +1,20 @@
 import { useEffect, useState } from "preact/hooks";
 import type { DesktopController } from "../model/controller.ts";
 import { ProviderBadge, QuotaDisplay } from "../../../../packages/ui/main.ts";
-import { native, reconnect, token } from "../native.ts";
+import {
+  loginEnabled,
+  native,
+  reconnect,
+  setLoginEnabled,
+  token,
+} from "../native.ts";
 export function Settings({ controller: c }: { controller: DesktopController }) {
   const [error, setError] = useState("");
   const [prefs, setPrefs] = useState(c.preferences);
   const [auto, setAuto] = useState(false);
   useEffect(() => {
     if (native) {
-      void import("@tauri-apps/plugin-autostart").then((a) => a.isEnabled())
-        .then(setAuto).catch(() => {});
+      void loginEnabled().then(setAuto).catch(() => {});
     }
   }, []);
   const perform = async (fn: () => Promise<unknown>) => {
@@ -264,9 +269,7 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
             onChange={(ev) => {
               const enabled = ev.currentTarget.checked;
               void perform(async () => {
-                const a = await import("@tauri-apps/plugin-autostart");
-                await (enabled ? a.enable() : a.disable());
-                setAuto(enabled);
+                setAuto(await setLoginEnabled(enabled));
               });
             }}
           />Launch Prompt Waypoint at login

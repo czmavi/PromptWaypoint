@@ -13,6 +13,7 @@ import type {
   TaskPatch,
 } from "../protocol/main.ts";
 import type { TaskBatchInput } from "../protocol/batch.ts";
+import { withRequestTimeout } from "./timeout.ts";
 export class ServerApiError extends Error {
   constructor(public status: number, public detail?: string) {
     super(`Server API ${status}`);
@@ -25,34 +26,38 @@ export class ServerClient {
     private token: string,
     private transport: typeof fetch = fetch,
   ) {}
-  private async request<T>(
+  private request<T>(
     path: string,
     method = "GET",
     body?: unknown,
     key?: string,
     signal?: AbortSignal,
   ): Promise<T> {
-    const response = await this.transport(new URL(path, this.baseUrl), {
-      method,
-      signal,
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        "Content-Type": "application/json",
-        ...(key ? { "Idempotency-Key": key } : {}),
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    if (!response.ok) {
-      let detail: string | undefined;
-      if (response.status < 500) {
-        try {
-          const body = await response.json();
-          if (typeof body.error === "string") detail = body.error.slice(0, 500);
-        } catch { /* Non-JSON errors remain status-only. */ }
-      } else await response.body?.cancel();
-      throw new ServerApiError(response.status, detail);
-    }
-    return response.json();
+    return withRequestTimeout(async (requestSignal) => {
+      const response = await this.transport(new URL(path, this.baseUrl), {
+        method,
+        signal: requestSignal,
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          "Content-Type": "application/json",
+          ...(key ? { "Idempotency-Key": key } : {}),
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      if (!response.ok) {
+        let detail: string | undefined;
+        if (response.status < 500) {
+          try {
+            const body = await response.json();
+            if (typeof body.error === "string") {
+              detail = body.error.slice(0, 500);
+            }
+          } catch { /* Non-JSON errors remain status-only. */ }
+        } else await response.body?.cancel();
+        throw new ServerApiError(response.status, detail);
+      }
+      return response.json();
+    }, signal);
   }
   login(secret: string): Promise<{ user: User; token: string }> {
     return this.request("/api/auth/dev-login", "POST", { secret });
@@ -176,9 +181,7 @@ export class ServerClient {
     while (!signal.aborted) {
       let delay = 4000;
       try {
-        const { revision } = await this.revision(
-          AbortSignal.any([signal, AbortSignal.timeout(15000)]),
-        );
+        const { revision } = await this.revision(signal);
         if (signal.aborted) return;
         if (previous !== revision) {
           await onChange();

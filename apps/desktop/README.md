@@ -27,6 +27,11 @@ Secret Service. Provider credentials are neither read nor displayed. Add
 repositories and already authenticated provider config directories in Settings,
 then select a default profile for each repository.
 
+The Mac App Store/TestFlight build runs in App Sandbox and requires entering the
+Local Agent token in Settings once. It supports macOS 13.3+ on Apple Silicon and
+Intel. See [the macOS TestFlight guide](TESTFLIGHT.md) for the release workflow,
+installation and remaining device checks.
+
 `deno task dev` opens a browser development server at `http://127.0.0.1:1420`.
 Its authenticated localhost proxy supports the default Agent address. Enter the
 Prompt Waypoint Agent token in Settings for browser previews; preview tokens
