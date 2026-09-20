@@ -8,6 +8,17 @@ import {
 import { DesktopController, serialized } from "./model/controller.ts";
 import { BrowserPersistence } from "./model/storage.ts";
 export const native = isTauri();
+export async function pickProjectDirectory(
+  path?: string,
+): Promise<string | null> {
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  return await open({
+    title: "Choose project folder",
+    directory: true,
+    multiple: false,
+    defaultPath: path || undefined,
+  });
+}
 export async function loginEnabled(): Promise<boolean> {
   return native ? await invoke<boolean>("login_enabled") : false;
 }

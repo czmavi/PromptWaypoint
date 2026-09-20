@@ -84,7 +84,7 @@ def main():
         require((contents / "Resources" / info["CFBundleIconFile"]).is_file(), "App icon is missing.")
         require(not list(contents.rglob("*.a")), "A static library was accidentally packaged.")
         print(f"Validated {config['productName']} {info['CFBundleShortVersionString']} ({info['CFBundleVersion']}).")
-        print(f"Universal Mac app, macOS {info['LSMinimumSystemVersion']}+, sandbox + outgoing network only.")
+        print(f"Universal Mac app, macOS {info['LSMinimumSystemVersion']}+, sandbox + outgoing network + user-selected read-only files.")
         print(f"App/installer signatures, team/profile, resources and privacy manifest passed: {args.package}")
 
 

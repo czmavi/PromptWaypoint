@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "project-picker",
+  "description": "Let the main window select a project directory",
+  "windows": ["main"],
+  "permissions": ["dialog:allow-open"]
+}

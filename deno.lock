@@ -44,6 +44,7 @@
     "npm:@tauri-apps/cli@2": "2.11.4",
     "npm:@tauri-apps/plugin-autostart@2": "2.5.1",
     "npm:@tauri-apps/plugin-deep-link@2": "2.4.10",
+    "npm:@tauri-apps/plugin-dialog@2": "2.7.3",
     "npm:@tauri-apps/plugin-notification@2": "2.4.0",
     "npm:@tauri-apps/plugin-opener@2": "2.5.5",
     "npm:@testing-library/preact@^3.2.4": "3.2.4_preact@10.29.7",
@@ -1171,6 +1172,12 @@
     },
     "@tauri-apps/plugin-deep-link@2.4.10": {
       "integrity": "sha512-SuXI47ORUzYuwG6c8dluLDrStTvli5bAZDRa2+VuUEzK/9TEa7FZz7UKXBQriL7+CPFXRHQsz5tSocc47tRXQQ==",
+      "dependencies": [
+        "@tauri-apps/api"
+      ]
+    },
+    "@tauri-apps/plugin-dialog@2.7.3": {
+      "integrity": "sha512-CRgE+7TP4tvq9MjBU6f04NLTFIqVMLKHk3hAqlhil00ngK9ACTrXPH3oHpKMProxILodd3YjBoKbMwSI4IEcfA==",
       "dependencies": [
         "@tauri-apps/api"
       ]
@@ -2632,6 +2639,7 @@
             "npm:@tauri-apps/api@2",
             "npm:@tauri-apps/cli@2",
             "npm:@tauri-apps/plugin-autostart@2",
+            "npm:@tauri-apps/plugin-dialog@2",
             "npm:@tauri-apps/plugin-notification@2",
             "npm:@tauri-apps/plugin-opener@2",
             "npm:@testing-library/preact@^3.2.4",

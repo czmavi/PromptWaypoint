@@ -3,6 +3,7 @@ import { Window } from "happy-dom";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { Editor } from "../src/components/Editor.tsx";
+import { RepositoryForm } from "../src/components/RepositoryForm.tsx";
 import { draft, fixture } from "./fixture.ts";
 import { QuotaDisplay, StatusBadge } from "../../../packages/ui/main.ts";
 async function withDOM(
@@ -38,6 +39,128 @@ function fill(
     new window.Event("input", { bubbles: true }) as unknown as Event,
   );
 }
+Deno.test("repository picker preserves cancellation and custom names, and submits the selected absolute path", () =>
+  withDOM(async (root, window) => {
+    let selection: string | null = null;
+    const defaults: (string | undefined)[] = [];
+    const added: { name: string; localPath: string }[] = [];
+    await act(() =>
+      render(
+        <RepositoryForm
+          disabled={false}
+          pickDirectory={(path) => {
+            defaults.push(path);
+            return Promise.resolve(selection);
+          }}
+          onAdd={(repository) => {
+            added.push(repository);
+            return Promise.resolve();
+          }}
+        />,
+        root,
+      )
+    );
+    const choose = () =>
+      root.querySelector<HTMLButtonElement>('button[type="button"]')!.click();
+    const path = () =>
+      root.querySelector<HTMLInputElement>('input[name="path"]')!;
+    const name = () =>
+      root.querySelector<HTMLInputElement>('input[name="name"]')!;
+    const submit = () =>
+      root.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    assert.ok(path().readOnly);
+    await act(async () => {
+      choose();
+      await Promise.resolve();
+    });
+    assert.equal(path().value, "");
+    assert.ok(submit().disabled);
+    selection = "/Users/developer/Projects/My Project";
+    await act(async () => {
+      choose();
+      await Promise.resolve();
+    });
+    assert.equal(name().value, "My Project");
+    assert.equal(path().value, selection);
+    await act(() => fill(root, window, 'input[name="name"]', "Custom name"));
+    selection = null;
+    await act(async () => {
+      choose();
+      await Promise.resolve();
+    });
+    assert.equal(path().value, "/Users/developer/Projects/My Project");
+    assert.equal(name().value, "Custom name");
+    selection = "/Users/developer/Projects/Another project";
+    await act(async () => {
+      choose();
+      await Promise.resolve();
+    });
+    assert.equal(defaults.at(-1), "/Users/developer/Projects/My Project");
+    assert.equal(name().value, "Custom name");
+    await act(async () => {
+      submit().click();
+      await Promise.resolve();
+    });
+    assert.deepEqual(added, [{ name: "Custom name", localPath: selection }]);
+    assert.equal(path().value, "");
+    assert.equal(name().value, "");
+    assert.ok(submit().disabled);
+  }));
+
+Deno.test("repository picker reports failures, retains the selection for retry and prevents duplicate submissions", () =>
+  withDOM(async (root) => {
+    let pickerFails = true;
+    let attempts = 0;
+    await act(() =>
+      render(
+        <RepositoryForm
+          disabled={false}
+          pickDirectory={() =>
+            pickerFails
+              ? Promise.reject(new Error("Folder dialog unavailable"))
+              : Promise.resolve("/tmp/project")}
+          onAdd={() => {
+            attempts++;
+            return Promise.reject(new Error("Agent unavailable"));
+          }}
+        />,
+        root,
+      )
+    );
+    const choose = () =>
+      root.querySelector<HTMLButtonElement>('button[type="button"]')!.click();
+    await act(async () => {
+      choose();
+      await Promise.resolve();
+    });
+    assert.match(
+      root.querySelector('[role="alert"]')!.textContent!,
+      /Folder dialog unavailable/,
+    );
+    pickerFails = false;
+    await act(async () => {
+      choose();
+      await Promise.resolve();
+    });
+    assert.equal(root.querySelector('[role="alert"]'), null);
+    await act(async () => {
+      const submit = root.querySelector<HTMLButtonElement>(
+        'button[type="submit"]',
+      )!;
+      submit.click();
+      submit.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    assert.equal(attempts, 1);
+    assert.match(
+      root.querySelector('[role="alert"]')!.textContent!,
+      /Agent unavailable/,
+    );
+    assert.equal(
+      root.querySelector<HTMLInputElement>('input[name="path"]')!.value,
+      "/tmp/project",
+    );
+  }));
 Deno.test("quick capture saves multiline idea from the UI and edits it without duplication", () =>
   withDOM(async (root, window) => {
     const f = fixture();

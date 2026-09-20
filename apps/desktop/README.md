@@ -27,6 +27,13 @@ Secret Service. Provider credentials are neither read nor displayed. Add
 repositories and already authenticated provider config directories in Settings,
 then select a default profile for each repository.
 
+Use **Choose folder…** under Repositories to select a project directory in the
+system dialog. Its folder name becomes the editable repository name; the
+selected path stays visible and **Change folder…** lets you replace it. Browser
+previews retain manual path entry because browsers do not expose absolute local
+directory paths. The Local Agent continues to access project files; the desktop
+app only passes the selected path to it.
+
 The Mac App Store/TestFlight build runs in App Sandbox and requires entering the
 Local Agent token in Settings once. It supports macOS 13.3+ on Apple Silicon and
 Intel. See [the macOS TestFlight guide](TESTFLIGHT.md) for the release workflow,
@@ -74,9 +81,10 @@ can adopt its observed local execution. An execution or external session alone
 never creates a cloud task. Editing active tasks is blocked; existing tasks stay
 in their original repository.
 
-The Rust layer only handles windows, tray, shortcut, autostart, notifications
-and Prompt Waypoint authentication storage. Shared presentation primitives live
-in `packages/ui`; orchestration lives in `src/model/controller.ts`.
+The Rust layer only handles windows, tray, shortcut, autostart, folder
+selection, notifications and Prompt Waypoint authentication storage. Shared
+presentation primitives live in `packages/ui`; orchestration lives in
+`src/model/controller.ts`.
 
 ## Validation
 

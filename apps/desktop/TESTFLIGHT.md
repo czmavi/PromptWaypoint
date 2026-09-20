@@ -51,6 +51,12 @@ app.
 
 ## Repeat the release
 
+The next build adds a native project folder picker in Settings. Its source
+entitlements include read-only access to user-selected files for the sandboxed
+dialog. The Local Agent still owns project access and execution. Verify folder
+selection, cancellation and adding a repository in the next signed build; the
+build 1 validation above predates this change.
+
 Install both Rust targets once:
 
 ```sh

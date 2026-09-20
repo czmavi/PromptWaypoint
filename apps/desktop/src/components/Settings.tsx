@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { DesktopController } from "../model/controller.ts";
 import { ProviderBadge, QuotaDisplay } from "../../../../packages/ui/main.ts";
+import { RepositoryForm } from "./RepositoryForm.tsx";
 import {
   loginEnabled,
   native,
@@ -63,37 +64,13 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
             </button>
           </div>
         ))}
-        <form
-          class="inline-form"
-          onSubmit={(ev) => {
-            ev.preventDefault();
-            const f = ev.currentTarget;
-            const d = new FormData(f);
-            void perform(async () => {
-              await c.localApi!.addRepository({
-                name: String(d.get("name")),
-                localPath: String(d.get("path")),
-              });
-              f.reset();
-            });
+        <RepositoryForm
+          disabled={!c.agentOnline}
+          onAdd={async (repository) => {
+            await c.localApi!.addRepository(repository);
+            await c.refresh();
           }}
-        >
-          <input
-            name="name"
-            required
-            placeholder="Repository name"
-            aria-label="Repository name"
-          />
-          <input
-            name="path"
-            required
-            placeholder="/absolute/repository/path"
-            aria-label="Repository path"
-          />
-          <button type="submit" disabled={!c.agentOnline}>
-            Add repository
-          </button>
-        </form>
+        />
       </section>
       <section>
         <h2>Provider Profiles</h2>
