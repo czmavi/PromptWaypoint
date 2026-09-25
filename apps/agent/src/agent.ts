@@ -25,6 +25,21 @@ interface Journal {
   phase?: "accepted" | "submitting";
 }
 export class Agent {
+  draining = false;
+  drain() {
+    return this.serial(() => {
+      const busy = this.store.all<Execution>("executions").some((e) =>
+        ["dispatching", "running", "unknown"].includes(e.state)
+      ) || this.store.all<Session>("sessions").some((s) =>
+        s.state === "running"
+      );
+      if (busy) {
+        throw new Error("Finish or stop active tasks before updating.");
+      }
+      this.draining = true;
+      return { ok: true };
+    });
+  }
   providers = new Map<string, CodingAgentProvider>();
   listeners = new Set<(event: AgentEvent) => void>();
   private tail: Promise<unknown> = Promise.resolve();
@@ -228,7 +243,14 @@ export class Agent {
     accepted: () => void = () => {},
   ): Promise<CommandResult> {
     const c = parseCommand(input);
-    return this.serial(() => this.execute(c, accepted));
+    return this.serial(() => {
+      if (this.draining) {
+        throw new Error(
+          "Agent is preparing to update. Try again after restart.",
+        );
+      }
+      return this.execute(c, accepted);
+    });
   }
   private async execute(
     c: Command,

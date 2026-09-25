@@ -92,4 +92,8 @@ export type {
   User,
 } from "./server.ts";
 
-export { DEFAULT_SERVER_URL, PRODUCT_NAME } from "./branding.ts";
+export {
+  DEFAULT_SERVER_URL,
+  MACOS_DOWNLOAD_URL,
+  PRODUCT_NAME,
+} from "./branding.ts";

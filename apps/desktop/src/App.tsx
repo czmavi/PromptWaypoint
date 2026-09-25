@@ -10,6 +10,7 @@ import {
 import type { TaskStatus } from "../../../packages/core/main.ts";
 import type { DesktopController } from "./model/controller.ts";
 import { capture, hideCapture, makeController } from "./native.ts";
+import { Updates } from "./components/Updates.tsx";
 import { Editor } from "./components/Editor.tsx";
 import { Settings } from "./components/Settings.tsx";
 const nav = [
@@ -240,6 +241,7 @@ export default function App(
         </div>
       </aside>
       <main class="workspace">
+        <Updates controller={c} />
         <header class="topbar">
           <span>
             Workspace <span class="slash">/</span>{" "}

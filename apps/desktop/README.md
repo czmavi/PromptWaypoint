@@ -1,10 +1,13 @@
 # Prompt Waypoint Desktop
 
 Task-first local control UI built with Tauri 2, Preact, TypeScript, Tailwind CSS
-and Deno. Start the Local Agent separately; Desktop does not launch or supervise
-provider processes.
+and Deno. The direct macOS download includes the Local Agent. Start it once in
+**Settings → Local Agent & Server → Start Local Agent**; later launches can
+start it automatically. Codex CLI / Claude Code still needs to be installed and
+signed in. See [macOS distribution](DISTRIBUTION.md) for installation and signed
+updates.
 
-## Run
+## Development
 
 From the repository root:
 
@@ -51,10 +54,9 @@ previews retain manual path entry because browsers do not expose absolute local
 directory paths. The Local Agent continues to access project files; the desktop
 app only passes the selected path to it.
 
-The Mac App Store/TestFlight build runs in App Sandbox and requires entering the
-Local Agent token in Settings once. It supports macOS 13.3+ on Apple Silicon and
-Intel. See [the macOS TestFlight guide](TESTFLIGHT.md) for the release workflow,
-installation and remaining device checks.
+macOS uses a universal DMG for Apple Silicon and Intel, macOS 13.3+. Mac App
+Store/TestFlight distribution is discontinued. The app checks for updates and
+installs them with **Update and restart** once running work has stopped.
 
 `deno task dev` opens a browser development server at `http://127.0.0.1:1420`.
 Its authenticated localhost proxy supports the default Agent address. Enter the
@@ -99,9 +101,9 @@ never creates a cloud task. Editing active tasks is blocked; existing tasks stay
 in their original repository.
 
 The Rust layer only handles windows, tray, shortcut, autostart, folder
-selection, notifications and Prompt Waypoint authentication storage. Shared
-presentation primitives live in `packages/ui`; orchestration lives in
-`src/model/controller.ts`.
+selection, notifications, Prompt Waypoint authentication storage, the bundled
+agent lifecycle and signature-verified updates. Shared presentation primitives
+live in `packages/ui`; orchestration lives in `src/model/controller.ts`.
 
 ## Validation
 
@@ -125,10 +127,11 @@ scenarios.
 
 ```sh
 cd apps/desktop
-deno task tauri build
+deno task macos:build
 ```
 
-macOS bundles are generated under `src-tauri/target/release/bundle/`. Native
-shortcut, notification permission, autostart and credential-store behavior
-should also be smoke-tested on each target operating system. Provider tests use
-local fixtures and do not submit work to live Codex or Claude accounts.
+macOS bundles are generated under
+`src-tauri/target/universal-apple-darwin/release/bundle/`. Native shortcut,
+notification permission, autostart and credential-store behavior should also be
+smoke-tested on each target operating system. Provider tests use local fixtures
+and do not submit work to live Codex or Claude accounts.

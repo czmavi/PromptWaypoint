@@ -1,0 +1,91 @@
+name: Release macOS
+on:
+  push:
+    tags: ["macos-v*"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-macos
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 60
+    environment: macos-release
+    env:
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+      PMAI_UPDATER_PUBLIC_KEY: ${{ secrets.PMAI_UPDATER_PUBLIC_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
+      - name: Validate release configuration
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          for key in ['APPLE_SIGNING_IDENTITY', 'APPLE_CERTIFICATE', 'APPLE_CERTIFICATE_PASSWORD', 'APPLE_API_PRIVATE_KEY', 'APPLE_API_KEY', 'APPLE_API_ISSUER', 'PMAI_UPDATER_PUBLIC_KEY', 'TAURI_SIGNING_PRIVATE_KEY', 'RELEASES_TOKEN']:
+              if not os.environ.get(key): raise SystemExit('Missing secret: ' + key)
+          version = json.load(open('apps/desktop/src-tauri/tauri.conf.json'))['version']
+          if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', version): raise SystemExit('Stable version required')
+          tag = 'macos-v' + version
+          if os.environ['GITHUB_REF_TYPE'] == 'tag' and os.environ['GITHUB_REF_NAME'] != tag: raise SystemExit('Tag/version mismatch')
+          with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('RELEASE_TAG=' + tag + '\n')
+          PY
+      - name: Install dependencies and Rust targets
+        run: |
+          deno install --frozen
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          brew install minisign
+      - name: Test
+        run: deno test --allow-read --allow-write --allow-env --allow-net --allow-run apps/agent apps/desktop/tests apps/desktop/scripts/release-manifest_test.ts
+      - name: Build universal app with bundled agent
+        run: deno task --cwd apps/desktop macos:build
+      - name: Smoke test bundled runtime
+        run: deno run --allow-read --allow-write --allow-env --allow-net --allow-run apps/desktop/scripts/smoke-bundled-agent.ts
+      - name: Import Developer ID and notarization key
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+        run: |
+          python3 - <<'PY'
+          import base64, os, pathlib
+          p = pathlib.Path(os.environ['RUNNER_TEMP'])
+          (p / 'developer-id.p12').write_bytes(base64.b64decode(os.environ['APPLE_CERTIFICATE']))
+          key = pathlib.Path(os.environ['APPLE_API_KEY_PATH'])
+          key.write_text(os.environ['APPLE_API_PRIVATE_KEY'])
+          key.chmod(0o600)
+          PY
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 32)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/release.keychain-db"
+          security set-keychain-settings -lut 7200 "$RUNNER_TEMP/release.keychain-db"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/release.keychain-db"
+          security import "$RUNNER_TEMP/developer-id.p12" -k "$RUNNER_TEMP/release.keychain-db" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$RUNNER_TEMP/release.keychain-db"
+          security list-keychains -d user -s "$RUNNER_TEMP/release.keychain-db" "$HOME/Library/Keychains/login.keychain-db"
+      - name: Sign, notarize and package
+        run: deno task --cwd apps/desktop macos:release RELEASE_NOTES.md
+      - name: Publish complete release to public downloads repository
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          deno run --allow-env --allow-read --allow-run apps/desktop/scripts/publish-macos.ts
+      - name: Remove temporary signing material
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/release.keychain-db" || true
+          rm -f "$RUNNER_TEMP/developer-id.p12" "$APPLE_API_KEY_PATH"

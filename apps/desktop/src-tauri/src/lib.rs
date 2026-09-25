@@ -4,6 +4,7 @@ use tauri::{
     Manager,
 };
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+mod distribution;
 #[tauri::command]
 fn login_enabled(app: tauri::AppHandle) -> Result<bool, String> {
     #[cfg(target_os = "macos")]
@@ -106,6 +107,8 @@ fn show_capture(app: tauri::AppHandle) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(distribution::Distribution::default())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(
@@ -164,8 +167,16 @@ pub fn run() {
             agent_token,
             show_capture,
             login_enabled,
-            set_login_enabled
+            set_login_enabled,
+            distribution::start_local_agent,
+            distribution::check_app_update,
+            distribution::install_app_update
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Prompt Waypoint");
+        .build(tauri::generate_context!())
+        .expect("error while building Prompt Waypoint")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                distribution::close_owned_agent(app);
+            }
+        });
 }

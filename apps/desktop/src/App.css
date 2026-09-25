@@ -576,6 +576,16 @@ dd {
   border-top: 1px solid var(--line);
   padding-top: 15px;
 }
+.update-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 24px;
+  background: var(--subtle);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
 .settings section p {
   font-size: 12px;
   color: var(--muted);

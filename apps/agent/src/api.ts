@@ -71,7 +71,14 @@ export function localApi(
         return response;
       }
       let data: unknown;
-      if (req.method === "GET" && url.pathname === "/state") {
+      if (req.method === "POST" && url.pathname === "/lifecycle/drain") {
+        data = await agent.drain();
+      } else if (
+        req.method === "POST" && url.pathname === "/lifecycle/resume"
+      ) {
+        agent.draining = false;
+        data = { ok: true };
+      } else if (req.method === "GET" && url.pathname === "/state") {
         const repositories = await Promise.all(
           agent.store.all<Repository>("repositories").map(async (r) => {
             try {

@@ -35,6 +35,12 @@ Deno.test("marketing SSR is public, static and independent of private services",
     }
     assert(html.includes("Turn ideas into work"), "headline");
     assert(
+      (html.match(
+        /href="https:\/\/github.com\/czmavi\/prompt-waypoint-releases\/releases\/latest\/download\/Prompt-Waypoint.dmg"/g,
+      ) ?? []).length === 3,
+      "all download links point directly to the latest DMG",
+    );
+    assert(
       (html.match(/<html\b/g) ?? []).length === 1,
       "single Fresh document",
     );

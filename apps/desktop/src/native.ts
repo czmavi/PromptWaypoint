@@ -8,6 +8,11 @@ import {
 import { DesktopController, serialized } from "./model/controller.ts";
 import { BrowserPersistence } from "./model/storage.ts";
 export const native = isTauri();
+export async function startLocalAgent(): Promise<string> {
+  const value = await invoke<string>("start_local_agent");
+  await token("agent", value);
+  return value;
+}
 export async function pickProjectDirectory(
   path?: string,
 ): Promise<string | null> {
@@ -62,6 +67,12 @@ export async function makeController() {
   const storage = new BrowserPersistence(localStorage);
   const prefs = storage.preferences();
   let agentToken = await token("agent").catch(() => "");
+  if (
+    native && prefs.autoStartLocalAgent &&
+    prefs.agentUrl === "http://127.0.0.1:7431"
+  ) {
+    agentToken = await startLocalAgent().catch(() => agentToken);
+  }
   if (!agentToken && native) {
     agentToken = await invoke<string>("agent_token").catch(() => "");
   }

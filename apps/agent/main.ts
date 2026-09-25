@@ -8,6 +8,10 @@ import { StdioRpc } from "./src/providers/rpc.ts";
 import { ServerSync } from "./src/sync.ts";
 export { Agent, localApi, Store };
 if (import.meta.main) {
+  if (Deno.args.includes("--version")) {
+    console.log("Prompt Waypoint Local Agent");
+    Deno.exit(0);
+  }
   const directory = Deno.env.get("PMAI_AGENT_DIR") ??
     `${Deno.env.get("HOME") ?? "."}/.pmai-agent`;
   await Deno.mkdir(directory, { recursive: true, mode: 0o700 });
@@ -76,4 +80,14 @@ if (import.meta.main) {
   Deno.addSignalListener("SIGTERM", () => {
     void close();
   });
+  // A packaged agent belongs to the desktop process. EOF closes it after a
+  // desktop crash as well as a normal exit; standalone CLI operation is unchanged.
+  if (Deno.env.get("PMAI_MANAGED_AGENT") === "1") {
+    void (async () => {
+      for await (
+        const _chunk of Deno.stdin.readable
+      ) { /* Parent keeps pipe open. */ }
+      await close();
+    })();
+  }
 }

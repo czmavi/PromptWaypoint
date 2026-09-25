@@ -15,6 +15,7 @@ export interface Preferences {
   notifications: boolean;
   refreshSeconds: number;
   appearance: "system" | "light" | "dark";
+  autoStartLocalAgent: boolean;
 }
 export const defaults: Preferences = {
   agentUrl: "http://127.0.0.1:7431",
@@ -22,6 +23,7 @@ export const defaults: Preferences = {
   notifications: true,
   refreshSeconds: 60,
   appearance: "system",
+  autoStartLocalAgent: false,
 };
 export interface Persistence {
   all(): DesktopTask[];

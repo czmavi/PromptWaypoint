@@ -1,4 +1,4 @@
-import { deepStrictEqual as equal, ok } from "node:assert/strict";
+import { deepStrictEqual as equal, ok, rejects } from "node:assert/strict";
 import { Agent, localApi, Store } from "./main.ts";
 import { FakeCodingAgentProvider } from "./src/providers/fake.ts";
 import {
@@ -45,6 +45,68 @@ function fixture(path = ":memory:", fake = new FakeCodingAgentProvider()) {
     },
   };
 }
+Deno.test("update drain serializes with commands and protects unfinished executions", async () => {
+  const f = fixture();
+  try {
+    const run = f.agent.command(f.command);
+    const drain = f.agent.drain();
+    await run;
+    await rejects(drain, /Finish or stop/);
+    equal(f.agent.draining, false);
+    for (const state of ["dispatching", "running", "unknown"] as const) {
+      f.store.put("executions", "e", {
+        ...f.store.get<Execution>("executions", "e")!,
+        state,
+      });
+      await rejects(f.agent.drain(), /Finish or stop/);
+    }
+    f.store.put("executions", "e", {
+      ...f.store.get<Execution>("executions", "e")!,
+      state: "waiting_input",
+    });
+    for (const s of f.store.all<Session>("sessions")) {
+      f.store.put("sessions", sessionKey(s.providerProfileId, s.id), {
+        ...s,
+        state: "completed",
+      });
+    }
+    await f.agent.drain();
+    await rejects(
+      f.agent.command({
+        ...f.command,
+        commandId: "later",
+        executionId: "later",
+      }),
+      /updat/i,
+    );
+    equal(f.fake.prompts, 1);
+    equal(f.store.get("commands", "later"), undefined);
+  } finally {
+    await f.close();
+  }
+});
+Deno.test("lifecycle endpoints require local authentication and can resume after an aborted update", async () => {
+  const f = fixture();
+  const api = localApi(f.agent, "secret");
+  const request = (path: string, token?: string) =>
+    api(
+      new Request(`http://127.0.0.1${path}`, {
+        method: "POST",
+        headers: token ? { authorization: `Bearer ${token}` } : {},
+      }),
+    );
+  try {
+    equal((await request("/lifecycle/drain")).status, 401);
+    equal(f.agent.draining, false);
+    equal((await request("/lifecycle/drain", "secret")).status, 200);
+    equal(f.agent.draining, true);
+    equal((await request("/lifecycle/resume", "secret")).status, 200);
+    await f.agent.command(f.command);
+    equal(f.fake.prompts, 1);
+  } finally {
+    await f.close();
+  }
+});
 Deno.test("duplicate command and concurrent double Run dispatch once", async () => {
   const f = fixture();
   try {

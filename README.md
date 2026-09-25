@@ -20,7 +20,19 @@ Waypoint client token is required to connect; the URL alone does not grant
 access. You can also run your own server. Local desktop use does not require a
 server or PostgreSQL.
 
-## Requirements
+## macOS download
+
+The direct macOS app includes the Local Agent and supports Apple Silicon and
+Intel on macOS 13.3+. Install it from the
+[latest DMG](https://github.com/czmavi/prompt-waypoint-releases/releases/latest/download/Prompt-Waypoint.dmg),
+then select **Start Local Agent** in Settings. Installed users do not need Deno
+or Rust. Codex CLI / Claude Code remains a separate, authenticated installation.
+The DMG becomes available after the first signed release is published.
+
+macOS uses GitHub Releases and in-app updates, without the Mac App Store. See
+[distribution and release setup](apps/desktop/DISTRIBUTION.md).
+
+## Development requirements
 
 - **Deno 2.9+**, including `node:sqlite` support.
 - **Codex CLI and/or Claude Code**, installed and authenticated on the computer

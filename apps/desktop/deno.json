@@ -3,9 +3,9 @@
     "dev": "vite --host 127.0.0.1",
     "build": "deno check src/main.tsx && vite build",
     "tauri": "tauri",
-    "macos:build:store": "tauri build --no-sign --target universal-apple-darwin --config src-tauri/tauri.appstore.conf.json",
-    "macos:archive": "python3 scripts/macos-archive.py",
-    "macos:package:check": "python3 scripts/macos-package-check.py"
+    "macos:agent": "deno run --allow-read --allow-write --allow-env --allow-run --allow-net scripts/bundle-agent.ts",
+    "macos:build": "deno task macos:agent && tauri build --no-sign --target universal-apple-darwin --config src-tauri/tauri.macos.conf.json",
+    "macos:release": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run scripts/release-macos.ts"
   },
   "imports": {
     "preact": "npm:preact@10.29.7",

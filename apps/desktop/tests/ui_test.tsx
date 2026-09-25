@@ -5,6 +5,7 @@ import { act } from "preact/test-utils";
 import { Editor } from "../src/components/Editor.tsx";
 import { RepositoryForm } from "../src/components/RepositoryForm.tsx";
 import { ProfileDiscovery } from "../src/components/ProfileDiscovery.tsx";
+import { type UpdateBridge, Updates } from "../src/components/Updates.tsx";
 import type {
   DiscoveredProviderProfile,
   ProviderProfile,
@@ -44,6 +45,64 @@ function fill(
     new window.Event("input", { bubbles: true }) as unknown as Event,
   );
 }
+Deno.test("updater deduplicates installation and restores the controller after a refused update", () =>
+  withDOM(async (root) => {
+    const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+    let starts = 0;
+    let stops = 0;
+    let installs = 0;
+    let reject!: (error: Error) => void;
+    const bridge: UpdateBridge = {
+      enabled: true,
+      check: () =>
+        Promise.resolve({
+          version: "0.3.0",
+          notes: "<script>untrusted</script>",
+        }),
+      install: () => {
+        installs++;
+        return new Promise((_, fail) => reject = fail);
+      },
+    };
+    await act(async () => {
+      render(
+        <Updates
+          bridge={bridge}
+          controller={{
+            start: () => {
+              starts++;
+              return Promise.resolve();
+            },
+            stop: () => {
+              stops++;
+            },
+          }}
+        />,
+        root,
+      );
+      await flush();
+    });
+    await act(flush);
+    assert.match(root.textContent!, /Version 0.3.0 is available/);
+    assert.equal(root.querySelector("script"), null);
+    await act(() => {
+      const button = root.querySelector<HTMLButtonElement>("button.primary")!;
+      button.click();
+      button.click();
+    });
+    assert.equal(installs, 1);
+    assert.equal(stops, 1);
+    await act(async () => {
+      reject(new Error("Finish or stop active tasks before updating"));
+      await flush();
+    });
+    assert.equal(starts, 1);
+    assert.match(root.textContent!, /Finish or stop active tasks/);
+    assert.equal(
+      root.querySelector<HTMLButtonElement>("button.primary")!.disabled,
+      false,
+    );
+  }));
 Deno.test("profile discovery scans on open, retries failures and imports a candidate only once", () =>
   withDOM(async (root) => {
     const candidate: DiscoveredProviderProfile = {

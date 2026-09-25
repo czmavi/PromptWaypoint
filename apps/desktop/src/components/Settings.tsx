@@ -9,6 +9,7 @@ import {
   pickConfigDirectory,
   reconnect,
   setLoginEnabled,
+  startLocalAgent,
   token,
 } from "../native.ts";
 export function Settings({ controller: c }: { controller: DesktopController }) {
@@ -195,6 +196,50 @@ export function Settings({ controller: c }: { controller: DesktopController }) {
       </section>
       <section>
         <h2>Local Agent & Server</h2>
+        {native && (
+          <div class="setting-row">
+            <div>
+              <strong>Local Agent</strong>
+              <small>
+                Run coding tasks on this Mac. Closing the window keeps the agent
+                running; quitting the app stops it.
+              </small>
+            </div>
+            <button
+              type="button"
+              disabled={c.agentOnline}
+              onClick={() =>
+                void perform(async () => {
+                  await startLocalAgent();
+                  const next = {
+                    ...prefs,
+                    agentUrl: "http://127.0.0.1:7431",
+                    autoStartLocalAgent: true,
+                  };
+                  setPrefs(next);
+                  c.persistence.savePreferences(next);
+                  await reconnect(c);
+                })}
+            >
+              {c.agentOnline ? "Agent connected" : "Start Local Agent"}
+            </button>
+            <label class="check-label">
+              <input
+                type="checkbox"
+                checked={prefs.autoStartLocalAgent}
+                onChange={(ev) => {
+                  const next = {
+                    ...prefs,
+                    autoStartLocalAgent: ev.currentTarget.checked,
+                  };
+                  setPrefs(next);
+                  c.preferences = next;
+                  c.persistence.savePreferences(next);
+                }}
+              />Start agent when Prompt Waypoint opens
+            </label>
+          </div>
+        )}
         <form
           onSubmit={(ev) => {
             ev.preventDefault();

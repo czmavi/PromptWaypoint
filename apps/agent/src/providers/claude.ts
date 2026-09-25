@@ -23,8 +23,9 @@ export class ClaudeProvider implements CodingAgentProvider {
   private fresh = new Set<string>();
   constructor(private configDirectory: string, private executable = "claude") {}
   private async discover(id?: string): Promise<Observation[]> {
-    const child = new Deno.Command(Deno.execPath(), {
-      args: [
+    const bundled = Deno.env.get("PMAI_CLAUDE_DISCOVERY_BIN");
+    const child = new Deno.Command(bundled || Deno.execPath(), {
+      args: bundled ? (id ? [id] : []) : [
         "run",
         "--config",
         new URL("../../deno.json", import.meta.url).pathname,

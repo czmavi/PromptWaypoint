@@ -1,4 +1,7 @@
-import { DEFAULT_SERVER_URL } from "../../../packages/core/main.ts";
+import {
+  DEFAULT_SERVER_URL,
+  MACOS_DOWNLOAD_URL,
+} from "../../../packages/core/main.ts";
 import type { Context } from "fresh";
 import type { State } from "../utils.ts";
 import {
@@ -162,9 +165,9 @@ export function LandingPage({ canonical }: { canonical?: string }) {
             <a href="#architecture">Architecture</a>
             <a href="#faq">FAQ</a>
           </nav>
-          <span class="beta-label">
-            <span aria-hidden="true">●</span> Public beta coming soon
-          </span>
+          <a class="beta-label" href={MACOS_DOWNLOAD_URL}>
+            Download for macOS ↓
+          </a>
         </header>
         <main id="main">
           <section class="hero shell">
@@ -182,11 +185,11 @@ export function LandingPage({ canonical }: { canonical?: string }) {
                 Codex and Claude—on your own machines.
               </p>
               <div class="hero-actions">
-                <a class="primary-link" href="#how-it-works">
-                  See how it works <span aria-hidden="true">↗</span>
+                <a class="primary-link" href={MACOS_DOWNLOAD_URL}>
+                  Download for macOS <span aria-hidden="true">↓</span>
                 </a>
                 <span class="hero-note">
-                  Your agents. Your machines. Your direction.
+                  macOS 13.3+ · Apple Silicon & Intel · Agent included
                 </span>
               </div>
             </div>
@@ -419,7 +422,9 @@ export function LandingPage({ canonical }: { canonical?: string }) {
             <h2>
               Your next idea.<br />Your agents’ next task.
             </h2>
-            <span class="beta-label">● Public beta coming soon</span>
+            <a class="primary-link" href={MACOS_DOWNLOAD_URL}>
+              Download for macOS ↓
+            </a>
           </section>
         </main>
         <footer class="shell">

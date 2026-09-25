@@ -90,6 +90,10 @@ export class ServerSync {
   }
   private async exchange() {
     if (this.stopped || this.busy) return;
+    if (this.agent.draining) {
+      this.schedule(4000);
+      return;
+    }
     this.busy = true;
     this.dirty = false;
     let delay = 4000;
@@ -167,7 +171,10 @@ export class ServerSync {
     }
   }
   private execute(command: Command) {
-    if (this.stopped || this.executing.has(command.commandId)) return;
+    if (
+      this.stopped || this.agent.draining ||
+      this.executing.has(command.commandId)
+    ) return;
     this.executing.add(command.commandId);
     void this.agent.command(command, () => {
       this.acknowledged.add(command.commandId);
