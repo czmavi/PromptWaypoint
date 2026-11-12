@@ -25,6 +25,6 @@
     "tailwindcss": "^4.1.12",
     "@tailwindcss/vite": "^4.1.12",
     "@testing-library/preact": "^3.2.4",
-    "happy-dom": "^20.0.0"
+    "happy-dom": "^21.0.4"
   }
 }

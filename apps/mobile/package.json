@@ -21,6 +21,6 @@
     "@tauri-apps/cli": "^2",
     "tailwindcss": "^4.1.12",
     "@tailwindcss/vite": "^4.1.12",
-    "happy-dom": "^20.0.0"
+    "happy-dom": "^21.0.4"
   }
 }
